@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- 我喜欢的一些颜色 -->
+    <!-- 蒂芙尼蓝 -->
+    <color name="tiffany_blue">#00adb5</color>
+    <!-- 丹霞绯 -->
+    <color name="danxia_crimson">#D1454A</color>
+    <!-- 青汀绿 -->
+    <color name="qingtin_teal">#19B076</color>
+
+    <color name="background_black">#000000</color>
+    <color name="background_card">#191919</color>
+    <color name="background_card_click">#242424</color>
+    <color name="text_color">#f3f3f3</color>
+</resources>
