@@ -11,6 +11,7 @@ import android.util.Log;
 
 import com.mrtoad.jianting.Utils.ToastUtils;
 
+import java.io.File;
 import java.io.IOException;
 
 public class PlayService extends Service {
@@ -32,9 +33,8 @@ public class PlayService extends Service {
 
     /**
      * 播放音乐
-     * @param uri 音频的 uri
      */
-    public void play(Uri uri) {
+    public void play(String filePath) {
         player.reset();
 
         try {
@@ -43,7 +43,7 @@ public class PlayService extends Service {
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .build());
-            player.setDataSource(this , uri);
+            player.setDataSource(filePath);
             player.prepare();
             player.start();
         } catch (IOException e) {

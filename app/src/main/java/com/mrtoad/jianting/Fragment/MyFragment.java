@@ -2,6 +2,9 @@ package com.mrtoad.jianting.Fragment;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -16,8 +19,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.bumptech.glide.Glide;
+import com.mrtoad.jianting.Activity.ILikedMusicActivity;
 import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.R;
+import com.mrtoad.jianting.Utils.MusicUtils;
 
 
 public class MyFragment extends Fragment {
@@ -26,6 +31,7 @@ public class MyFragment extends Fragment {
 
     private ImageView avatarImage;
     private LinearLayout importMusicArea;
+    private LinearLayout ILikedMusicArea;
 
 
     @Override
@@ -34,9 +40,17 @@ public class MyFragment extends Fragment {
 
         avatarImage = view.findViewById(R.id.avatar_image);
         importMusicArea = view.findViewById(R.id.import_music_area);
+        ILikedMusicArea = view.findViewById(R.id.i_liked_music_area);
 
         Glide.with(this).load(R.mipmap.avatar).circleCrop().into(avatarImage);
 
+        /**
+         * 跳转到我喜欢的音乐
+         */
+        ILikedMusicArea.setOnClickListener((v) -> {
+            Intent intent = new Intent(getContext() , ILikedMusicActivity.class);
+            startActivity(intent);
+        });
 
         /**
          * 导入音乐
@@ -60,9 +74,8 @@ public class MyFragment extends Fragment {
         if (requestCode == REQUEST_CODE_IMPORT_MUSIC && resultCode == Activity.RESULT_OK && data != null) {
             Uri uri = data.getData();
             if (uri != null) {
-                Intent playIntent = new Intent(MediaBroadcastAction.ACTION_PLAY);
-                playIntent.putExtra("uri", uri.toString());
-                getActivity().sendBroadcast(playIntent.setPackage(getActivity().getPackageName()));
+                // 保存音乐
+                MusicUtils.saveMusic(getContext() , uri);
             }
         }
     }

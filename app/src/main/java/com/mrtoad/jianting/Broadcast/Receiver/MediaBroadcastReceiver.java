@@ -12,9 +12,11 @@ import java.util.Objects;
 
 public class MediaBroadcastReceiver extends BroadcastReceiver {
 
+    public static final String ACTION_PLAY_KEY_FILE_PATH = "filePath";
+
     private onPlayListener onPlayListener;
     public interface onPlayListener {
-        void onPlay(Uri uri);
+        void onPlay(String filePath);
     }
 
     public void setOnPlayListener(onPlayListener onPlayListener) {
@@ -24,8 +26,8 @@ public class MediaBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (Objects.equals(intent.getAction(), MediaBroadcastAction.ACTION_PLAY)) {
-            String uri = intent.getStringExtra("uri");
-            onPlayListener.onPlay(Uri.parse(uri));
+            String filePath = intent.getStringExtra(ACTION_PLAY_KEY_FILE_PATH);
+            onPlayListener.onPlay(filePath);
         }
     }
 }

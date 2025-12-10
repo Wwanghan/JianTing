@@ -4,6 +4,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.util.Log;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -54,6 +56,11 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+        // TODO 修改状态栏图标颜色为白色。已达到正常在黑色背景下显示的目的。但这个方法需要在每个 Activity 下添加。还没找到更好的方法，暂时先这样
+        getWindow().setStatusBarColor(Color.BLACK);
+        // 设置状态栏图标为浅色（白色）
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
+
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
 
         // 设置默认的 Fragment
@@ -81,8 +88,8 @@ public class MainActivity extends AppCompatActivity {
         /**
          * 监听音乐播放
          */
-        mediaBroadcastReceiver.setOnPlayListener((uri) -> {
-            playService.play(uri);
+        mediaBroadcastReceiver.setOnPlayListener((filePath) -> {
+            playService.play(filePath);
         });
 
     }

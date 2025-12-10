@@ -40,6 +40,7 @@
 
         <!-- 导入您喜欢的音乐 -->
         <LinearLayout
+            android:id="@+id/i_liked_music_area"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
