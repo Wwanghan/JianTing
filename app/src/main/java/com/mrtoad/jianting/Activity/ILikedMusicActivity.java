@@ -9,6 +9,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.ImageView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.DrawableRes;
@@ -21,6 +22,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.mrtoad.jianting.Adapter.ILikedMusicAdapter;
 import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
@@ -32,6 +34,7 @@ import com.mrtoad.jianting.Utils.SPDataUtils;
 import com.mrtoad.jianting.Utils.ToastUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +42,7 @@ public class ILikedMusicActivity extends AppCompatActivity {
 
     private RecyclerView iLikedMusicRecyclerView;
     private List<ILikedMusicEntity> iLIkedMusicList = new ArrayList<>();
+    private ImageView biggerImageCover;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,8 +55,13 @@ public class ILikedMusicActivity extends AppCompatActivity {
         WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
 
         iLikedMusicRecyclerView = findViewById(R.id.i_liked_music_recycler_view);
+        biggerImageCover = findViewById(R.id.bigger_music_cover);
+
+        Glide.with(this).load(R.mipmap.avatar).circleCrop().into(biggerImageCover);
 
         List<String> musicNameList = SPDataUtils.getLocalList(this, LocalListConstants.LOCAL_LIST_I_LIKED_MUSIC);
+        // 反转列表，最新导入的显示在最上方
+        Collections.reverse(musicNameList);
         for (String musicName : musicNameList) {
             Map<String, String> musicInfoMap = SPDataUtils.getMapInformation(this, musicName);
 

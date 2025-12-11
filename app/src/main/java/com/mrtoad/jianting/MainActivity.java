@@ -18,6 +18,7 @@ import androidx.core.view.WindowCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.kongzue.dialogx.DialogX;
 import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
 import com.mrtoad.jianting.Fragment.FrontPageFragment;
@@ -60,6 +61,9 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setStatusBarColor(Color.BLACK);
         // 设置状态栏图标为浅色（白色）
         WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
+
+        // 初始化 DialogX，方便后续使用
+        DialogX.init(this);
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
 

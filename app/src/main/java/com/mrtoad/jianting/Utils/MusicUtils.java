@@ -11,6 +11,9 @@ import android.os.FileUtils;
 import android.provider.OpenableColumns;
 import android.util.Log;
 
+import com.kongzue.dialogx.dialogs.TipDialog;
+import com.kongzue.dialogx.dialogs.WaitDialog;
+import com.mrtoad.jianting.Constants.DialogConstants;
 import com.mrtoad.jianting.Constants.LocalListConstants;
 import com.mrtoad.jianting.Constants.MusicInfoConstants;
 import com.mrtoad.jianting.R;
@@ -42,6 +45,8 @@ public class MusicUtils {
         // 保存音乐信息
         assert file != null;
         saveMusicInfo(context , file);
+
+        TipDialog.show(DialogConstants.TIP_DIALOG_IMPORT_MUSIC_SUCCESS , WaitDialog.TYPE.SUCCESS);
     }
 
     @SuppressLint("ResourceType")
