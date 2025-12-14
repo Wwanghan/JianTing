@@ -1,11 +1,8 @@
 package com.mrtoad.jianting.Activity;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,21 +12,23 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.DrawableRes;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.mrtoad.jianting.Adapter.ILikedMusicAdapter;
-import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
-import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
+import com.mrtoad.jianting.Broadcast.MediaMethods;
+import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
 import com.mrtoad.jianting.Constants.LocalListConstants;
 import com.mrtoad.jianting.Constants.MusicInfoConstants;
+import com.mrtoad.jianting.Constants.SPDataConstants;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
+import com.mrtoad.jianting.Fragment.BottomPlayerFragment;
 import com.mrtoad.jianting.R;
+import com.mrtoad.jianting.Utils.FragmentUtils;
+import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
 import com.mrtoad.jianting.Utils.SPDataUtils;
 import com.mrtoad.jianting.Utils.ToastUtils;
 
@@ -43,6 +42,8 @@ public class ILikedMusicActivity extends AppCompatActivity {
     private RecyclerView iLikedMusicRecyclerView;
     private List<ILikedMusicEntity> iLIkedMusicList = new ArrayList<>();
     private ImageView biggerImageCover;
+    private FragmentManager fragmentManager;
+    private BottomPlayerFragment bottomPlayerFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +59,10 @@ public class ILikedMusicActivity extends AppCompatActivity {
         biggerImageCover = findViewById(R.id.bigger_music_cover);
 
         Glide.with(this).load(R.mipmap.avatar).circleCrop().into(biggerImageCover);
+
+        fragmentManager = getSupportFragmentManager();
+        bottomPlayerFragment = BottomPlayerFragment.newInstance();
+        FragmentUtils.loadFragment(fragmentManager , R.id.bottom_player_fragment , bottomPlayerFragment);
 
         List<String> musicNameList = SPDataUtils.getLocalList(this, LocalListConstants.LOCAL_LIST_I_LIKED_MUSIC);
         // 反转列表，最新导入的显示在最上方
@@ -79,16 +84,23 @@ public class ILikedMusicActivity extends AppCompatActivity {
         iLikedMusicRecyclerView.setAdapter(iLikedMusicAdapter);
         iLikedMusicRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        bottomPlayerFragment.setOnBottomPlayerReadyListener(() -> {
+            GlobalMethodsUtils.setBottmPlayerFragment(this , fragmentManager , bottomPlayerFragment);
+        });
+
         /**
          * 监听 Item 的点击事件
          */
         iLikedMusicAdapter.setOnItemClickListener(new ILikedMusicAdapter.onItemClickListener() {
             @Override
             public void onItemClick(ILikedMusicEntity item) {
-                Intent playMusicIntent = new Intent(MediaBroadcastAction.ACTION_PLAY);
-                playMusicIntent.putExtra(MediaBroadcastReceiver.ACTION_PLAY_KEY_FILE_PATH , item.getMusicFilePath());
-                playMusicIntent.setPackage(getPackageName());
-                sendBroadcast(playMusicIntent);
+                MediaMethods.playMusic(ILikedMusicActivity.this , item.getMusicFilePath());
+
+                if (bottomPlayerFragment.isHidden()) { FragmentUtils.showFragment(fragmentManager , bottomPlayerFragment); }
+                // 更新底部音乐导航 UI，并将正在播放的音乐名保存起来。最后通知 MainActivity 那边更新 UI
+                bottomPlayerFragment.updateUi(item.getMusicName() , item.getMusicFilePath());
+                SPDataUtils.storageInformation(ILikedMusicActivity.this , SPDataConstants.LAST_PLAY , item.getMusicName());
+                StandardBroadcastMethods.updateBottomPlayerUi(ILikedMusicActivity.this , item.getMusicName() , item.getMusicFilePath());
             }
         });
 

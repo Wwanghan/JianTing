@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.JianTing">
         <activity
+            android:name=".Activity.PlayActivity"
+            android:exported="false" />
+        <activity
             android:name=".Activity.ILikedMusicActivity"
             android:exported="false" />
 
