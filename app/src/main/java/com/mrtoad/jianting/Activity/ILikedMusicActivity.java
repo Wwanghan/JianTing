@@ -1,5 +1,6 @@
 package com.mrtoad.jianting.Activity;
 
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -19,13 +20,16 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.mrtoad.jianting.Adapter.ILikedMusicAdapter;
+import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.Broadcast.MediaMethods;
+import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
 import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
 import com.mrtoad.jianting.Constants.LocalListConstants;
 import com.mrtoad.jianting.Constants.MusicInfoConstants;
 import com.mrtoad.jianting.Constants.SPDataConstants;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
 import com.mrtoad.jianting.Fragment.BottomPlayerFragment;
+import com.mrtoad.jianting.GlobalDataManager;
 import com.mrtoad.jianting.R;
 import com.mrtoad.jianting.Utils.FragmentUtils;
 import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
@@ -44,6 +48,7 @@ public class ILikedMusicActivity extends AppCompatActivity {
     private ImageView biggerImageCover;
     private FragmentManager fragmentManager;
     private BottomPlayerFragment bottomPlayerFragment;
+    private MediaBroadcastReceiver mediaBroadcastReceiver = new MediaBroadcastReceiver();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,14 +99,19 @@ public class ILikedMusicActivity extends AppCompatActivity {
         iLikedMusicAdapter.setOnItemClickListener(new ILikedMusicAdapter.onItemClickListener() {
             @Override
             public void onItemClick(ILikedMusicEntity item) {
-                MediaMethods.playMusic(ILikedMusicActivity.this , item.getMusicFilePath());
+                MediaMethods.playMusic(ILikedMusicActivity.this , item.getMusicName() , item.getMusicFilePath());
 
                 if (bottomPlayerFragment.isHidden()) { FragmentUtils.showFragment(fragmentManager , bottomPlayerFragment); }
+                GlobalDataManager.getInstance().setPlaying(true);
                 // 更新底部音乐导航 UI，并将正在播放的音乐名保存起来。最后通知 MainActivity 那边更新 UI
                 bottomPlayerFragment.updateUi(item.getMusicName() , item.getMusicFilePath());
                 SPDataUtils.storageInformation(ILikedMusicActivity.this , SPDataConstants.LAST_PLAY , item.getMusicName());
                 StandardBroadcastMethods.updateBottomPlayerUi(ILikedMusicActivity.this , item.getMusicName() , item.getMusicFilePath());
             }
+        });
+
+        mediaBroadcastReceiver.setOnFinishListener((musicName , musicFilePath) -> {
+            bottomPlayerFragment.updateUi(musicName , musicFilePath);
         });
 
     }
@@ -131,5 +141,19 @@ public class ILikedMusicActivity extends AppCompatActivity {
         }
 
         return bitmap;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        registerReceiver(mediaBroadcastReceiver , new IntentFilter(MediaBroadcastAction.ACTION_FINISH) , RECEIVER_EXPORTED);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        unregisterReceiver(mediaBroadcastReceiver);
     }
 }

@@ -21,8 +21,10 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.kongzue.dialogx.DialogX;
 import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.Broadcast.Action.StandardBroadcastAction;
+import com.mrtoad.jianting.Broadcast.MediaMethods;
 import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
 import com.mrtoad.jianting.Broadcast.Receiver.StandardBroadcastReceiver;
+import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
 import com.mrtoad.jianting.Fragment.BottomPlayerFragment;
 import com.mrtoad.jianting.Fragment.FrontPageFragment;
 import com.mrtoad.jianting.Fragment.MyFragment;
@@ -45,6 +47,11 @@ public class MainActivity extends AppCompatActivity {
             playService = myBinder.getService();
             isServiceBound = true;
 
+            // 播放完毕后更新 UI
+            playService.setOnFinishListener((musicName , musicFilePath) -> {
+                StandardBroadcastMethods.updateBottomPlayerUi(MainActivity.this , musicName , musicFilePath);
+                MediaMethods.finishMusic(MainActivity.this , musicName , musicFilePath);
+            });
 
         }
 
@@ -106,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
         standardBroadcastReceiver.setOnUpdateUiListener(new StandardBroadcastReceiver.onUpdateBottomPlayerUiListener() {
             @Override
             public void updateUi(String musicName, String musicFilePath) {
+                Log.d("@@@" , "update");
                 if (bottomPlayerFragment.isHidden()) {
                     // 使用 commitAllowingStateLoss 提交，用于在后台中做更新操作
                     getSupportFragmentManager().beginTransaction().show(bottomPlayerFragment).commitAllowingStateLoss();
@@ -122,8 +130,15 @@ public class MainActivity extends AppCompatActivity {
         /**
          * 监听音乐播放
          */
-        mediaBroadcastReceiver.setOnPlayListener((filePath) -> {
-            playService.play(filePath);
+        mediaBroadcastReceiver.setOnPlayListener((musicName , musicFilePath) -> {
+            playService.play(musicName , musicFilePath);
+        });
+
+        /**
+         * 监听音乐暂停
+         */
+        mediaBroadcastReceiver.setOnPauseListener(() -> {
+            playService.pause();
         });
 
     }
@@ -141,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
         // 创建媒体广播接收器
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(MediaBroadcastAction.ACTION_PLAY);
+        intentFilter.addAction(MediaBroadcastAction.ACTION_PAUSE);
         registerReceiver(mediaBroadcastReceiver , intentFilter , RECEIVER_EXPORTED);
     }
 

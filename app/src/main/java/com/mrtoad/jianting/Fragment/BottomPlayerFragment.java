@@ -6,6 +6,8 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +19,8 @@ import com.mrtoad.jianting.Activity.PlayActivity;
 import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.Broadcast.MediaMethods;
 import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
+import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
+import com.mrtoad.jianting.GlobalDataManager;
 import com.mrtoad.jianting.Interface.OnBottomPlayerReadyListener;
 import com.mrtoad.jianting.R;
 import com.mrtoad.jianting.Utils.ToastUtils;
@@ -74,13 +78,34 @@ public class BottomPlayerFragment extends Fragment {
         musicAuthor.setText("未知作者");
 
         playButton.setOnClickListener((v) -> {
-            MediaMethods.playMusic(getActivity() , musicFilePath);
+            if (GlobalDataManager.getInstance().isPlaying()) {
+                GlobalDataManager.getInstance().setPlaying(false);
+                MediaMethods.pauseMusic(getActivity());
+            } else {
+                GlobalDataManager.getInstance().setPlaying(true);
+                MediaMethods.playMusic(getActivity() , musicName.getText().toString() , musicFilePath);
+            }
+            // 更新底部播放器 UI，同时如果用户不在 MainActivity，下面代码则会通知 MainActivity 更新 UI
+            setPlayButton();
+            StandardBroadcastMethods.updateBottomPlayerUi(getActivity() , musicName.getText().toString() , musicFilePath);
         });
     }
 
     public void updateUi(String musicName , String musicFilePath) {
         this.musicName.setText(musicName);
         this.musicFilePath = musicFilePath;
+        setPlayButton();
+    }
+
+    /**
+     * 设置播放按钮状态
+     */
+    private void setPlayButton() {
+        if (GlobalDataManager.getInstance().isPlaying()) {
+            playButton.setImageResource(R.drawable.pause_button);
+        } else {
+            playButton.setImageResource(R.drawable.play_button);
+        }
     }
 
 }
