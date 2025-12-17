@@ -20,6 +20,7 @@ import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.Broadcast.MediaMethods;
 import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
 import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
+import com.mrtoad.jianting.Entity.ILikedMusicEntity;
 import com.mrtoad.jianting.GlobalDataManager;
 import com.mrtoad.jianting.Interface.OnBottomPlayerReadyListener;
 import com.mrtoad.jianting.R;
@@ -34,6 +35,7 @@ public class BottomPlayerFragment extends Fragment {
     private ImageView playButton;
     private String musicFilePath;
     private OnBottomPlayerReadyListener onBottomPlayerReadyListener;
+    private ILikedMusicEntity iLikedMusicEntity;
 
     public static BottomPlayerFragment newInstance() {
         BottomPlayerFragment fragment = new BottomPlayerFragment();
@@ -71,6 +73,7 @@ public class BottomPlayerFragment extends Fragment {
 
         bottomPlayerArea.setOnClickListener((v) -> {
             Intent intent = new Intent(getActivity() , PlayActivity.class);
+            intent.putExtra(PlayActivity.ACTION_KEY_I_LIKED_MUSIC_ENTITY , iLikedMusicEntity);
             startActivity(intent);
         });
 
@@ -83,17 +86,18 @@ public class BottomPlayerFragment extends Fragment {
                 MediaMethods.pauseMusic(getActivity());
             } else {
                 GlobalDataManager.getInstance().setPlaying(true);
-                MediaMethods.playMusic(getActivity() , musicName.getText().toString() , musicFilePath);
+                MediaMethods.playMusic(getActivity() , iLikedMusicEntity);
             }
             // 更新底部播放器 UI，同时如果用户不在 MainActivity，下面代码则会通知 MainActivity 更新 UI
             setPlayButton();
-            StandardBroadcastMethods.updateBottomPlayerUi(getActivity() , musicName.getText().toString() , musicFilePath);
+            StandardBroadcastMethods.updateBottomPlayerUi(getActivity() , iLikedMusicEntity);
         });
     }
 
-    public void updateUi(String musicName , String musicFilePath) {
-        this.musicName.setText(musicName);
-        this.musicFilePath = musicFilePath;
+    public void updateUi(ILikedMusicEntity iLikedMusicEntity) {
+        this.iLikedMusicEntity = iLikedMusicEntity;
+        this.musicName.setText(iLikedMusicEntity.getMusicName());
+        this.musicFilePath = iLikedMusicEntity.getMusicFilePath();
         setPlayButton();
     }
 

@@ -76,7 +76,7 @@ public class ILikedMusicActivity extends AppCompatActivity {
             Map<String, String> musicInfoMap = SPDataUtils.getMapInformation(this, musicName);
 
             String resId = musicInfoMap.get(MusicInfoConstants.MUSIC_INFO_COVER);
-            Bitmap bitmap = getBitmapFromVectorDrawable(Integer.parseInt(resId));
+            Bitmap bitmap = GlobalMethodsUtils.getBitmapFromVectorDrawable(ILikedMusicActivity.this , Integer.parseInt(resId));
 
             String name = musicInfoMap.get(MusicInfoConstants.MUSIC_INFO_NAME);
             String author = musicInfoMap.get(MusicInfoConstants.MUSIC_INFO_AUTHOR);
@@ -96,51 +96,24 @@ public class ILikedMusicActivity extends AppCompatActivity {
         /**
          * 监听 Item 的点击事件
          */
-        iLikedMusicAdapter.setOnItemClickListener(new ILikedMusicAdapter.onItemClickListener() {
-            @Override
-            public void onItemClick(ILikedMusicEntity item) {
-                MediaMethods.playMusic(ILikedMusicActivity.this , item.getMusicName() , item.getMusicFilePath());
+        iLikedMusicAdapter.setOnItemClickListener((iLikedMusicEntity) -> {
+            MediaMethods.playMusic(ILikedMusicActivity.this , iLikedMusicEntity);
 
-                if (bottomPlayerFragment.isHidden()) { FragmentUtils.showFragment(fragmentManager , bottomPlayerFragment); }
-                GlobalDataManager.getInstance().setPlaying(true);
-                // 更新底部音乐导航 UI，并将正在播放的音乐名保存起来。最后通知 MainActivity 那边更新 UI
-                bottomPlayerFragment.updateUi(item.getMusicName() , item.getMusicFilePath());
-                SPDataUtils.storageInformation(ILikedMusicActivity.this , SPDataConstants.LAST_PLAY , item.getMusicName());
-                StandardBroadcastMethods.updateBottomPlayerUi(ILikedMusicActivity.this , item.getMusicName() , item.getMusicFilePath());
-            }
+            if (bottomPlayerFragment.isHidden()) { FragmentUtils.showFragment(fragmentManager , bottomPlayerFragment); }
+            GlobalDataManager.getInstance().setPlaying(true);
+            // 更新底部音乐导航 UI，并将正在播放的音乐名保存起来。最后通知 MainActivity 那边更新 UI
+            bottomPlayerFragment.updateUi(iLikedMusicEntity);
+            SPDataUtils.storageInformation(ILikedMusicActivity.this , SPDataConstants.LAST_PLAY , iLikedMusicEntity.getMusicName());
+            StandardBroadcastMethods.updateBottomPlayerUi(ILikedMusicActivity.this , iLikedMusicEntity);
         });
 
-        mediaBroadcastReceiver.setOnFinishListener((musicName , musicFilePath) -> {
-            bottomPlayerFragment.updateUi(musicName , musicFilePath);
+        /**
+         * 监听 MediaPlayer 播放完成事件
+         */
+        mediaBroadcastReceiver.setOnFinishListener((iLikedMusicEntity) -> {
+            bottomPlayerFragment.updateUi(iLikedMusicEntity);
         });
 
-    }
-
-    /**
-     * 将矢量图转为 Bitmap
-     * @param drawableResId 矢量图的资源 ID
-     * @return Bitmap
-     */
-    private Bitmap getBitmapFromVectorDrawable(@DrawableRes int drawableResId) {
-        Drawable drawable = AppCompatResources.getDrawable(this, drawableResId);
-
-        if (drawable == null) {
-            return null;
-        }
-
-        Bitmap bitmap = null;
-        try {
-            bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
-                    drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmap);
-            drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-            drawable.draw(canvas);
-        } catch (Exception e) {
-            ToastUtils.showToast(this , "默认图片加载失败");
-            Log.d("@@@" , e.getMessage());
-        }
-
-        return bitmap;
     }
 
     @Override

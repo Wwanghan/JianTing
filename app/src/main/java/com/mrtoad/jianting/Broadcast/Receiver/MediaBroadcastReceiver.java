@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
+import com.mrtoad.jianting.Entity.ILikedMusicEntity;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnFinishListener;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnPauseListener;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnPlayListener;
@@ -13,8 +14,7 @@ import java.util.Objects;
 
 public class MediaBroadcastReceiver extends BroadcastReceiver {
 
-    public static final String ACTION_PLAY_KEY_FILE_PATH = "filePath";
-    public static final String ACTION_PLAY_KEY_MUSIC_NAME = "musicName";
+    public static final String ACTION_KEY_I_LIKED_MUSIC_ENTITY = "iLikedMusicEntity";
 
     private OnPlayListener onPlayListener;
     public void setOnPlayListener(OnPlayListener onPlayListener) {
@@ -34,15 +34,13 @@ public class MediaBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (Objects.equals(intent.getAction(), MediaBroadcastAction.ACTION_PLAY)) {
-            String musicName = intent.getStringExtra(ACTION_PLAY_KEY_MUSIC_NAME);
-            String musicFilePath = intent.getStringExtra(ACTION_PLAY_KEY_FILE_PATH);
-            onPlayListener.onPlay(musicName , musicFilePath);
+            ILikedMusicEntity iLikedMusicEntity = intent.getParcelableExtra(ACTION_KEY_I_LIKED_MUSIC_ENTITY);
+            onPlayListener.onPlay(iLikedMusicEntity);
         } else if (Objects.equals(intent.getAction(), MediaBroadcastAction.ACTION_PAUSE)) {
             onPauseListener.onPause();
         } else if (Objects.equals(intent.getAction(), MediaBroadcastAction.ACTION_FINISH)) {
-            String musicName = intent.getStringExtra(ACTION_PLAY_KEY_MUSIC_NAME);
-            String musicFilePath = intent.getStringExtra(ACTION_PLAY_KEY_FILE_PATH);
-            onFinishListener.onFinish(musicName , musicFilePath);
+            ILikedMusicEntity iLikedMusicEntity = intent.getParcelableExtra(ACTION_KEY_I_LIKED_MUSIC_ENTITY);
+            onFinishListener.onFinish(iLikedMusicEntity);
         }
     }
 }

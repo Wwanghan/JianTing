@@ -32,6 +32,7 @@ import com.mrtoad.jianting.Interface.OnBottomPlayerReadyListener;
 import com.mrtoad.jianting.Service.PlayService;
 import com.mrtoad.jianting.Utils.FragmentUtils;
 import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
+import com.mrtoad.jianting.Utils.SPDataUtils;
 import com.mrtoad.jianting.Utils.ToastUtils;
 
 public class MainActivity extends AppCompatActivity {
@@ -48,9 +49,9 @@ public class MainActivity extends AppCompatActivity {
             isServiceBound = true;
 
             // 播放完毕后更新 UI
-            playService.setOnFinishListener((musicName , musicFilePath) -> {
-                StandardBroadcastMethods.updateBottomPlayerUi(MainActivity.this , musicName , musicFilePath);
-                MediaMethods.finishMusic(MainActivity.this , musicName , musicFilePath);
+            playService.setOnFinishListener((iLikedMusicEntity) -> {
+                StandardBroadcastMethods.updateBottomPlayerUi(MainActivity.this , iLikedMusicEntity);
+                MediaMethods.finishMusic(MainActivity.this , iLikedMusicEntity);
             });
 
         }
@@ -110,17 +111,13 @@ public class MainActivity extends AppCompatActivity {
         /**
          * 监听底部播放器的更新事件
          */
-        standardBroadcastReceiver.setOnUpdateUiListener(new StandardBroadcastReceiver.onUpdateBottomPlayerUiListener() {
-            @Override
-            public void updateUi(String musicName, String musicFilePath) {
-                Log.d("@@@" , "update");
-                if (bottomPlayerFragment.isHidden()) {
-                    // 使用 commitAllowingStateLoss 提交，用于在后台中做更新操作
-                    getSupportFragmentManager().beginTransaction().show(bottomPlayerFragment).commitAllowingStateLoss();
-                }
-                bottomPlayerFragment.updateUi(musicName , musicFilePath);
+        standardBroadcastReceiver.setOnUpdateBottomPlayerListener((iLikedMusicEntity -> {
+            if (bottomPlayerFragment.isHidden()) {
+                // 使用 commitAllowingStateLoss 提交，用于在后台中做更新操作
+                getSupportFragmentManager().beginTransaction().show(bottomPlayerFragment).commitAllowingStateLoss();
             }
-        });
+            bottomPlayerFragment.updateUi(iLikedMusicEntity);
+        }));
 
 
         // 绑定音乐播放服务（全局唯一，只需要绑定一次）
@@ -130,8 +127,8 @@ public class MainActivity extends AppCompatActivity {
         /**
          * 监听音乐播放
          */
-        mediaBroadcastReceiver.setOnPlayListener((musicName , musicFilePath) -> {
-            playService.play(musicName , musicFilePath);
+        mediaBroadcastReceiver.setOnPlayListener((iLikedMusicEntity) -> {
+            playService.play(iLikedMusicEntity);
         });
 
         /**

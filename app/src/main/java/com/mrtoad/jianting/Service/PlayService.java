@@ -11,6 +11,7 @@ import android.util.Log;
 
 import com.mrtoad.jianting.Broadcast.MediaMethods;
 import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
+import com.mrtoad.jianting.Entity.ILikedMusicEntity;
 import com.mrtoad.jianting.GlobalDataManager;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnFinishListener;
 
@@ -45,12 +46,11 @@ public class PlayService extends Service {
 
     /**
      * 播放音乐
-     * @param musicName 音乐名称
-     * @param musicFilePath 文件路径
+     * @param iLikedMusicEntity 音乐实体
      */
-    public void play(String musicName , String musicFilePath) {
+    public void play(ILikedMusicEntity iLikedMusicEntity) {
         // 如果是同一首歌，并且已经播放过了。则直接播放
-        if (player != null && musicFilePath.equals(currentFilePath) && isPrepared) {
+        if (player != null && iLikedMusicEntity.getMusicFilePath().equals(currentFilePath) && isPrepared) {
             if (!player.isPlaying()) {
                 player.start();
             }
@@ -59,10 +59,10 @@ public class PlayService extends Service {
 
         // 如果是新歌，那么则需要重新播放
         resetPlayer();
-        currentFilePath = musicFilePath;
+        currentFilePath = iLikedMusicEntity.getMusicFilePath();
 
         try {
-            player.setDataSource(musicFilePath);
+            player.setDataSource(iLikedMusicEntity.getMusicFilePath());
             player.prepareAsync();  // 使用异步准备防止ANR
 
             player.setOnPreparedListener((mediaPlayer -> {
@@ -77,7 +77,7 @@ public class PlayService extends Service {
             isPrepared = false;  // 播放完成后重置状态
             GlobalDataManager.getInstance().setPlaying(false);
 
-            onFinishListener.onFinish(musicName, musicFilePath);
+            onFinishListener.onFinish(iLikedMusicEntity);
         });
     }
 
