@@ -68,6 +68,7 @@ public class PlayService extends Service {
             player.setOnPreparedListener((mediaPlayer -> {
                 isPrepared = true;
                 mediaPlayer.start();
+                GlobalDataManager.getInstance().setPlayer(player);
             }));
         } catch (IOException e) {
             Log.d("@@@" , "播放失败 : " + e.getMessage());
@@ -88,6 +89,24 @@ public class PlayService extends Service {
         if (player != null) {
             player.pause();
         }
+    }
+
+    /**
+     * 设置音乐播放进度
+     * @param progress 进度
+     */
+    public void setProgress(int progress) {
+        if (player != null) {
+            player.seekTo(progress);
+        }
+    }
+
+    /**
+     * 切换播放音乐
+     * @param iLikedMusicEntity 音乐实体
+     */
+    public void switchPlay(ILikedMusicEntity iLikedMusicEntity) {
+        play(iLikedMusicEntity);
     }
 
     /**

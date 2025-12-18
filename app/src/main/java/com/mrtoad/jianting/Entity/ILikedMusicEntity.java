@@ -9,21 +9,23 @@ public class ILikedMusicEntity implements Parcelable {
     private String musicName;
     private String musicAuthor;
     private String musicFilePath;
+    private String duration;
 
 
     public ILikedMusicEntity() {
     }
 
-    public ILikedMusicEntity(Bitmap musicCover, String musicName, String musicAuthor, String musicFilePath) {
+    public ILikedMusicEntity(Bitmap musicCover, String musicName, String musicAuthor, String musicFilePath, String duration) {
         this.musicCover = musicCover;
         this.musicName = musicName;
         this.musicAuthor = musicAuthor;
         this.musicFilePath = musicFilePath;
+        this.duration = duration;
     }
 
     /**
      * 获取
-     * @return musicCover
+     * @return musicCover 
      */
     public Bitmap getMusicCover() {
         return musicCover;
@@ -39,7 +41,7 @@ public class ILikedMusicEntity implements Parcelable {
 
     /**
      * 获取
-     * @return musicName
+     * @return musicName 
      */
     public String getMusicName() {
         return musicName;
@@ -55,7 +57,7 @@ public class ILikedMusicEntity implements Parcelable {
 
     /**
      * 获取
-     * @return musicAuthor
+     * @return musicAuthor 
      */
     public String getMusicAuthor() {
         return musicAuthor;
@@ -71,7 +73,7 @@ public class ILikedMusicEntity implements Parcelable {
 
     /**
      * 获取
-     * @return musicFilePath
+     * @return musicFilePath 
      */
     public String getMusicFilePath() {
         return musicFilePath;
@@ -85,8 +87,24 @@ public class ILikedMusicEntity implements Parcelable {
         this.musicFilePath = musicFilePath;
     }
 
+    /**
+     * 获取
+     * @return duration 
+     */
+    public String getDuration() {
+        return duration;
+    }
+
+    /**
+     * 设置
+     * @param duration
+     */
+    public void setDuration(String duration) {
+        this.duration = duration;
+    }
+
     public String toString() {
-        return "ILikedMusicEntity{musicCover = " + musicCover + ", musicName = " + musicName + ", musicAuthor = " + musicAuthor + ", musicFilePath = " + musicFilePath + "}";
+        return "ILikedMusicEntity{musicCover = " + musicCover + ", musicName = " + musicName + ", musicAuthor = " + musicAuthor + ", musicFilePath = " + musicFilePath + ", duration = " + duration + "}";
     }
 
     // Parcelable 实现
@@ -96,6 +114,7 @@ public class ILikedMusicEntity implements Parcelable {
         musicName = in.readString();
         musicAuthor = in.readString();
         musicFilePath = in.readString();
+        duration = in.readString();
     }
 
     public static final Creator<ILikedMusicEntity> CREATOR = new Creator<ILikedMusicEntity>() {
@@ -121,5 +140,6 @@ public class ILikedMusicEntity implements Parcelable {
         dest.writeString(musicName);
         dest.writeString(musicAuthor);
         dest.writeString(musicFilePath);
+        dest.writeString(duration);
     }
 }

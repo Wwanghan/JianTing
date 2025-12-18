@@ -21,8 +21,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.mrtoad.jianting.Adapter.ILikedMusicAdapter;
 import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
+import com.mrtoad.jianting.Broadcast.Action.StandardBroadcastAction;
 import com.mrtoad.jianting.Broadcast.MediaMethods;
 import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
+import com.mrtoad.jianting.Broadcast.Receiver.StandardBroadcastReceiver;
 import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
 import com.mrtoad.jianting.Constants.LocalListConstants;
 import com.mrtoad.jianting.Constants.MusicInfoConstants;
@@ -49,6 +51,7 @@ public class ILikedMusicActivity extends AppCompatActivity {
     private FragmentManager fragmentManager;
     private BottomPlayerFragment bottomPlayerFragment;
     private MediaBroadcastReceiver mediaBroadcastReceiver = new MediaBroadcastReceiver();
+    private StandardBroadcastReceiver standardBroadcastReceiver = new StandardBroadcastReceiver();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,8 +84,9 @@ public class ILikedMusicActivity extends AppCompatActivity {
             String name = musicInfoMap.get(MusicInfoConstants.MUSIC_INFO_NAME);
             String author = musicInfoMap.get(MusicInfoConstants.MUSIC_INFO_AUTHOR);
             String filePath = musicInfoMap.get(MusicInfoConstants.MUSIC_INFO_FILE_PATH);
+            String duration = musicInfoMap.get(MusicInfoConstants.MUSIC_INFO_DURATION);
 
-            iLIkedMusicList.add(new ILikedMusicEntity(bitmap , name , author , filePath));
+            iLIkedMusicList.add(new ILikedMusicEntity(bitmap , name , author , filePath , duration));
         }
 
         ILikedMusicAdapter iLikedMusicAdapter = new ILikedMusicAdapter(this , iLIkedMusicList);
@@ -114,6 +118,17 @@ public class ILikedMusicActivity extends AppCompatActivity {
             bottomPlayerFragment.updateUi(iLikedMusicEntity);
         });
 
+        /**
+         * 监听底部音乐播放器更新
+         */
+        standardBroadcastReceiver.setOnUpdateBottomPlayerListener((iLikedMusicEntity -> {
+            if (bottomPlayerFragment.isHidden()) {
+                // 使用 commitAllowingStateLoss 提交，用于在后台中做更新操作
+                getSupportFragmentManager().beginTransaction().show(bottomPlayerFragment).commitAllowingStateLoss();
+            }
+            bottomPlayerFragment.updateUi(iLikedMusicEntity);
+        }));
+
     }
 
     @Override
@@ -121,6 +136,7 @@ public class ILikedMusicActivity extends AppCompatActivity {
         super.onStart();
 
         registerReceiver(mediaBroadcastReceiver , new IntentFilter(MediaBroadcastAction.ACTION_FINISH) , RECEIVER_EXPORTED);
+        registerReceiver(standardBroadcastReceiver , new IntentFilter(StandardBroadcastAction.ACTION_UPDATE_UI) , RECEIVER_EXPORTED);
     }
 
     @Override
@@ -128,5 +144,6 @@ public class ILikedMusicActivity extends AppCompatActivity {
         super.onDestroy();
 
         unregisterReceiver(mediaBroadcastReceiver);
+        unregisterReceiver(standardBroadcastReceiver);
     }
 }

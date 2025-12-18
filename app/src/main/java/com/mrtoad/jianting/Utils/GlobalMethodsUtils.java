@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
+import android.widget.ImageView;
 
 import androidx.annotation.DrawableRes;
 import androidx.appcompat.content.res.AppCompatResources;
@@ -15,6 +16,8 @@ import com.mrtoad.jianting.Constants.MusicInfoConstants;
 import com.mrtoad.jianting.Constants.SPDataConstants;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
 import com.mrtoad.jianting.Fragment.BottomPlayerFragment;
+import com.mrtoad.jianting.GlobalDataManager;
+import com.mrtoad.jianting.R;
 
 import java.util.Map;
 
@@ -31,15 +34,26 @@ public class GlobalMethodsUtils {
             FragmentUtils.hideFragment(fragmentManager , bottomPlayerFragment);
         } else {
             String lastPlay = SPDataUtils.getStorageInformation(activity, SPDataConstants.LAST_PLAY);
-            Map<String, String> lastPlayMap = SPDataUtils.getMapInformation(activity, lastPlay);
-            ILikedMusicEntity iLikedMusicEntity = new ILikedMusicEntity(
-                    getBitmapFromVectorDrawable(activity , Integer.parseInt(lastPlayMap.get(MusicInfoConstants.MUSIC_INFO_COVER))),
-                    lastPlayMap.get(MusicInfoConstants.MUSIC_INFO_NAME),
-                    lastPlayMap.get(MusicInfoConstants.MUSIC_INFO_AUTHOR),
-                    lastPlayMap.get(MusicInfoConstants.MUSIC_INFO_FILE_PATH)
-            );
-            bottomPlayerFragment.updateUi(iLikedMusicEntity);
+            bottomPlayerFragment.updateUi(getMusicEntityByMusicName(activity, lastPlay));
         }
+    }
+
+    /**
+     * 根据音乐名称（Key）获取音乐实体对象
+     * @param activity
+     * @param musicName
+     * @return
+     */
+    public static ILikedMusicEntity getMusicEntityByMusicName(Activity activity , String musicName) {
+        Map<String, String> musicMapInformation = SPDataUtils.getMapInformation(activity, musicName);
+        ILikedMusicEntity iLikedMusicEntity = new ILikedMusicEntity(
+                getBitmapFromVectorDrawable(activity , Integer.parseInt(musicMapInformation.get(MusicInfoConstants.MUSIC_INFO_COVER))),
+                musicMapInformation.get(MusicInfoConstants.MUSIC_INFO_NAME),
+                musicMapInformation.get(MusicInfoConstants.MUSIC_INFO_AUTHOR),
+                musicMapInformation.get(MusicInfoConstants.MUSIC_INFO_FILE_PATH),
+                musicMapInformation.get(MusicInfoConstants.MUSIC_INFO_DURATION)
+        );
+        return iLikedMusicEntity;
     }
 
     /**
@@ -67,5 +81,16 @@ public class GlobalMethodsUtils {
         }
 
         return bitmap;
+    }
+
+    /**
+     * 设置播放按钮状态
+     */
+    public static void setPlayButton(ImageView playButton) {
+        if (GlobalDataManager.getInstance().isPlaying()) {
+            playButton.setImageResource(R.drawable.pause_button);
+        } else {
+            playButton.setImageResource(R.drawable.play_button);
+        }
     }
 }

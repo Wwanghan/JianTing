@@ -53,11 +53,17 @@ public class MusicUtils {
     private static void saveMusicInfo(Context context , File file) {
         Map<String , String> musicInfoMap = new HashMap<>();
 
+        // 元数据提取
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        retriever.setDataSource(file.getAbsolutePath());
+        String duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+
         String fileName = file.getName().split("\\.")[0];
         musicInfoMap.put(MusicInfoConstants.MUSIC_INFO_NAME , fileName);
         musicInfoMap.put(MusicInfoConstants.MUSIC_INFO_AUTHOR , "未知作者");
         musicInfoMap.put(MusicInfoConstants.MUSIC_INFO_COVER , String.valueOf(R.drawable.music_cover_default));
         musicInfoMap.put(MusicInfoConstants.MUSIC_INFO_FILE_PATH , file.getAbsolutePath());
+        musicInfoMap.put(MusicInfoConstants.MUSIC_INFO_DURATION , duration);
         SPDataUtils.storeMapInformation(context , fileName , musicInfoMap);
 
         SPDataUtils.addLocalList(context , LocalListConstants.LOCAL_LIST_I_LIKED_MUSIC , fileName);

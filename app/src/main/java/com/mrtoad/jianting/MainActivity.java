@@ -138,6 +138,20 @@ public class MainActivity extends AppCompatActivity {
             playService.pause();
         });
 
+        /**
+         * 监听音乐进度条进度改变
+         */
+        mediaBroadcastReceiver.setOnProgressChanged((progress) -> {
+            playService.setProgress(progress);
+        });
+
+        /**
+         * 监听音乐切换播放
+         */
+        mediaBroadcastReceiver.setOnSwitchPlayListener((iLikedMusicEntity -> {
+            playService.switchPlay(iLikedMusicEntity);
+        }));
+
     }
 
     @Override
@@ -154,6 +168,8 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(MediaBroadcastAction.ACTION_PLAY);
         intentFilter.addAction(MediaBroadcastAction.ACTION_PAUSE);
+        intentFilter.addAction(MediaBroadcastAction.ACTION_PROGRESS_CHANGED);
+        intentFilter.addAction(MediaBroadcastAction.ACTION_SWITCH_PLAY);
         registerReceiver(mediaBroadcastReceiver , intentFilter , RECEIVER_EXPORTED);
     }
 

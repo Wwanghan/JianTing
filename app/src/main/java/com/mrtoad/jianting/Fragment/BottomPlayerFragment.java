@@ -24,6 +24,7 @@ import com.mrtoad.jianting.Entity.ILikedMusicEntity;
 import com.mrtoad.jianting.GlobalDataManager;
 import com.mrtoad.jianting.Interface.OnBottomPlayerReadyListener;
 import com.mrtoad.jianting.R;
+import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
 import com.mrtoad.jianting.Utils.ToastUtils;
 
 public class BottomPlayerFragment extends Fragment {
@@ -89,7 +90,7 @@ public class BottomPlayerFragment extends Fragment {
                 MediaMethods.playMusic(getActivity() , iLikedMusicEntity);
             }
             // 更新底部播放器 UI，同时如果用户不在 MainActivity，下面代码则会通知 MainActivity 更新 UI
-            setPlayButton();
+            GlobalMethodsUtils.setPlayButton(playButton);
             StandardBroadcastMethods.updateBottomPlayerUi(getActivity() , iLikedMusicEntity);
         });
     }
@@ -98,7 +99,7 @@ public class BottomPlayerFragment extends Fragment {
         this.iLikedMusicEntity = iLikedMusicEntity;
         this.musicName.setText(iLikedMusicEntity.getMusicName());
         this.musicFilePath = iLikedMusicEntity.getMusicFilePath();
-        setPlayButton();
+        GlobalMethodsUtils.setPlayButton(playButton);
     }
 
     /**
