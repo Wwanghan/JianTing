@@ -222,8 +222,12 @@ public class PlayActivity extends AppCompatActivity {
      */
     private void setData() {
         // 设置动态渐变背景
-        Bitmap bitmap = GlobalMethodsUtils.getBitmapFromVectorDrawable(PlayActivity.this, R.drawable.music_cover_default);
-        GradientColorExtractor.setGradientFromBitmapSync(root , bitmap , 135);
+        if (iLikedMusicEntity.getMusicCover() != null) {
+            GradientColorExtractor.setGradientFromFilePathSync(root , iLikedMusicEntity.getMusicCover() , 135);
+        } else {
+            Bitmap bitmap = GlobalMethodsUtils.getBitmapFromVectorDrawable(PlayActivity.this, R.drawable.music_cover_default);
+            GradientColorExtractor.setGradientFromBitmapSync(root , bitmap , 135);
+        }
 
         GlobalMethodsUtils.setMusicCover(PlayActivity.this , musicCover , iLikedMusicEntity.getMusicCover());
         musicName.setText(iLikedMusicEntity.getMusicName());
