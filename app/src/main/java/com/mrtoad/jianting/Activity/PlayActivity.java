@@ -168,7 +168,13 @@ public class PlayActivity extends AppCompatActivity {
         ILikedMusicEntity musicEntity = GlobalMethodsUtils.getMusicEntityByMusicName(PlayActivity.this, musicName);
         MediaMethods.switchPlay(PlayActivity.this , musicEntity);
         this.iLikedMusicEntity = musicEntity;
+
+        GlobalDataManager.getInstance().setPlaying(true);
+        GlobalMethodsUtils.setPlayButton(playButton);
         setData();
+        cannelPlayerTimer();
+        startPlayerTimer();
+
         SPDataUtils.storageInformation(PlayActivity.this , SPDataConstants.LAST_PLAY , musicName);
         StandardBroadcastMethods.updateBottomPlayerUi(PlayActivity.this , iLikedMusicEntity);
     }
@@ -219,7 +225,7 @@ public class PlayActivity extends AppCompatActivity {
         Bitmap bitmap = GlobalMethodsUtils.getBitmapFromVectorDrawable(PlayActivity.this, R.drawable.music_cover_default);
         GradientColorExtractor.setGradientFromBitmapSync(root , bitmap , 135);
 
-        musicCover.setImageBitmap(iLikedMusicEntity.getMusicCover());
+        GlobalMethodsUtils.setMusicCover(PlayActivity.this , musicCover , iLikedMusicEntity.getMusicCover());
         musicName.setText(iLikedMusicEntity.getMusicName());
         musicAuthor.setText(iLikedMusicEntity.getMusicAuthor());
         playButton.setImageResource(R.drawable.play_button);

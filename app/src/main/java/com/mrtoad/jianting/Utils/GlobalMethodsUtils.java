@@ -1,9 +1,11 @@
 package com.mrtoad.jianting.Utils;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.util.Log;
 import android.widget.ImageView;
 
@@ -12,6 +14,7 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.bumptech.glide.Glide;
 import com.mrtoad.jianting.Constants.MusicInfoConstants;
 import com.mrtoad.jianting.Constants.SPDataConstants;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
@@ -19,6 +22,7 @@ import com.mrtoad.jianting.Fragment.BottomPlayerFragment;
 import com.mrtoad.jianting.GlobalDataManager;
 import com.mrtoad.jianting.R;
 
+import java.io.File;
 import java.util.Map;
 
 public class GlobalMethodsUtils {
@@ -47,7 +51,7 @@ public class GlobalMethodsUtils {
     public static ILikedMusicEntity getMusicEntityByMusicName(Activity activity , String musicName) {
         Map<String, String> musicMapInformation = SPDataUtils.getMapInformation(activity, musicName);
         ILikedMusicEntity iLikedMusicEntity = new ILikedMusicEntity(
-                getBitmapFromVectorDrawable(activity , Integer.parseInt(musicMapInformation.get(MusicInfoConstants.MUSIC_INFO_COVER))),
+                musicMapInformation.get(MusicInfoConstants.MUSIC_INFO_COVER),
                 musicMapInformation.get(MusicInfoConstants.MUSIC_INFO_NAME),
                 musicMapInformation.get(MusicInfoConstants.MUSIC_INFO_AUTHOR),
                 musicMapInformation.get(MusicInfoConstants.MUSIC_INFO_FILE_PATH),
@@ -91,6 +95,20 @@ public class GlobalMethodsUtils {
             playButton.setImageResource(R.drawable.pause_button);
         } else {
             playButton.setImageResource(R.drawable.play_button);
+        }
+    }
+
+    /**
+     * 设置音乐封面
+     * @param imageView 图片控件
+     * @param musicCover 音乐封面数据
+     */
+    public static void setMusicCover(Context context , ImageView imageView , String musicCover) {
+        if (musicCover != null) {
+            File file = new File(musicCover);
+            Glide.with(context).load(file).circleCrop().into(imageView);
+        } else {
+            imageView.setImageResource(R.drawable.music_cover_default);
         }
     }
 }

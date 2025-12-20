@@ -1,6 +1,8 @@
 package com.mrtoad.jianting.Adapter;
 
 import android.content.Context;
+import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +15,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
+import com.mrtoad.jianting.Interface.ILikedMusicInterface.OnClickListener;
+import com.mrtoad.jianting.Interface.ILikedMusicInterface.OnLongClickListener;
 import com.mrtoad.jianting.R;
+import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
+import com.mrtoad.jianting.Utils.ToastUtils;
 
 import java.util.List;
 
@@ -22,14 +28,15 @@ public class ILikedMusicAdapter extends RecyclerView.Adapter<ILikedMusicAdapter.
     private Context context;
     private List<ILikedMusicEntity> ILIkedMusicList;
     private LayoutInflater inflater;
-    private onItemClickListener onItemClickListener;
 
-    public interface onItemClickListener {
-        void onItemClick(ILikedMusicEntity item);
+    private OnClickListener onClickListener;
+    public void setOnClickListener(OnClickListener onClickListener) {
+        this.onClickListener = onClickListener;
     }
 
-    public void setOnItemClickListener(onItemClickListener onItemClickListener) {
-        this.onItemClickListener = onItemClickListener;
+    private OnLongClickListener onLongClickListener;
+    public void setOnLongClickListener(OnLongClickListener onLongClickListener) {
+        this.onLongClickListener = onLongClickListener;
     }
 
     public ILikedMusicAdapter(Context context, List<ILikedMusicEntity> ILIkedMusicList) {
@@ -47,18 +54,23 @@ public class ILikedMusicAdapter extends RecyclerView.Adapter<ILikedMusicAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull ILikedMusicAdapter.ViewHolder holder, int position) {
-        ILikedMusicEntity ILikedMusicEntity = ILIkedMusicList.get(position);
+        ILikedMusicEntity iLikedMusicEntity = ILIkedMusicList.get(position);
 
         // 设置基本信息
-        holder.musicCover.setImageBitmap(ILikedMusicEntity.getMusicCover());
-        Glide.with(context).load(ILikedMusicEntity.getMusicCover()).circleCrop().into(holder.musicCover);
+        GlobalMethodsUtils.setMusicCover(context , holder.musicCover , iLikedMusicEntity.getMusicCover());
 
-        holder.musicName.setText(ILikedMusicEntity.getMusicName());
-        holder.musicAuthor.setText(ILikedMusicEntity.getMusicAuthor());
+        holder.musicName.setText(iLikedMusicEntity.getMusicName());
+        holder.musicAuthor.setText(iLikedMusicEntity.getMusicAuthor());
 
-        // 设置项目点击事件
+        // 设置音乐区域点击事件
         holder.musicArea.setOnClickListener((v) -> {
-            onItemClickListener.onItemClick(ILikedMusicEntity);
+            onClickListener.onClick(iLikedMusicEntity);
+        });
+
+        // 设置音乐区域长按事件
+        holder.musicArea.setOnLongClickListener((v) -> {
+            onLongClickListener.onLongClick(iLikedMusicEntity);
+            return false;
         });
     }
 

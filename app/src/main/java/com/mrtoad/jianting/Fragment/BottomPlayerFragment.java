@@ -72,15 +72,18 @@ public class BottomPlayerFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        /**
+         * 底部播放器区域点击事件
+         */
         bottomPlayerArea.setOnClickListener((v) -> {
             Intent intent = new Intent(getActivity() , PlayActivity.class);
             intent.putExtra(PlayActivity.ACTION_KEY_I_LIKED_MUSIC_ENTITY , iLikedMusicEntity);
             startActivity(intent);
         });
 
-        musicCover.setImageResource(R.drawable.music_cover_default);
-        musicAuthor.setText("未知作者");
-
+        /**
+         * 播放按钮点击事件
+         */
         playButton.setOnClickListener((v) -> {
             if (GlobalDataManager.getInstance().isPlaying()) {
                 GlobalDataManager.getInstance().setPlaying(false);
@@ -97,7 +100,9 @@ public class BottomPlayerFragment extends Fragment {
 
     public void updateUi(ILikedMusicEntity iLikedMusicEntity) {
         this.iLikedMusicEntity = iLikedMusicEntity;
+        GlobalMethodsUtils.setMusicCover(getActivity() , this.musicCover , iLikedMusicEntity.getMusicCover());
         this.musicName.setText(iLikedMusicEntity.getMusicName());
+        this.musicAuthor.setText(iLikedMusicEntity.getMusicAuthor());
         this.musicFilePath = iLikedMusicEntity.getMusicFilePath();
         GlobalMethodsUtils.setPlayButton(playButton);
     }

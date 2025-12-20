@@ -5,7 +5,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 public class ILikedMusicEntity implements Parcelable {
-    private Bitmap musicCover;
+    private String musicCover;
     private String musicName;
     private String musicAuthor;
     private String musicFilePath;
@@ -15,7 +15,7 @@ public class ILikedMusicEntity implements Parcelable {
     public ILikedMusicEntity() {
     }
 
-    public ILikedMusicEntity(Bitmap musicCover, String musicName, String musicAuthor, String musicFilePath, String duration) {
+    public ILikedMusicEntity(String musicCover, String musicName, String musicAuthor, String musicFilePath, String duration) {
         this.musicCover = musicCover;
         this.musicName = musicName;
         this.musicAuthor = musicAuthor;
@@ -27,7 +27,7 @@ public class ILikedMusicEntity implements Parcelable {
      * 获取
      * @return musicCover 
      */
-    public Bitmap getMusicCover() {
+    public String getMusicCover() {
         return musicCover;
     }
 
@@ -35,7 +35,7 @@ public class ILikedMusicEntity implements Parcelable {
      * 设置
      * @param musicCover
      */
-    public void setMusicCover(Bitmap musicCover) {
+    public void setMusicCover(String musicCover) {
         this.musicCover = musicCover;
     }
 
@@ -110,7 +110,7 @@ public class ILikedMusicEntity implements Parcelable {
     // Parcelable 实现
     protected ILikedMusicEntity(Parcel in) {
         // Bitmap 需要特殊处理
-        musicCover = in.readParcelable(Bitmap.class.getClassLoader());
+        musicCover = in.readString();
         musicName = in.readString();
         musicAuthor = in.readString();
         musicFilePath = in.readString();
@@ -136,7 +136,7 @@ public class ILikedMusicEntity implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeParcelable(musicCover, flags);
+        dest.writeString(musicCover);
         dest.writeString(musicName);
         dest.writeString(musicAuthor);
         dest.writeString(musicFilePath);

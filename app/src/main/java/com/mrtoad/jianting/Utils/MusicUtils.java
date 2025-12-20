@@ -57,11 +57,13 @@ public class MusicUtils {
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         retriever.setDataSource(file.getAbsolutePath());
         String duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+        String author = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+        author = author == null ? "未知作者" : author;
 
         String fileName = file.getName().split("\\.")[0];
         musicInfoMap.put(MusicInfoConstants.MUSIC_INFO_NAME , fileName);
-        musicInfoMap.put(MusicInfoConstants.MUSIC_INFO_AUTHOR , "未知作者");
-        musicInfoMap.put(MusicInfoConstants.MUSIC_INFO_COVER , String.valueOf(R.drawable.music_cover_default));
+        musicInfoMap.put(MusicInfoConstants.MUSIC_INFO_AUTHOR , author);
+        musicInfoMap.put(MusicInfoConstants.MUSIC_INFO_COVER , null);
         musicInfoMap.put(MusicInfoConstants.MUSIC_INFO_FILE_PATH , file.getAbsolutePath());
         musicInfoMap.put(MusicInfoConstants.MUSIC_INFO_DURATION , duration);
         SPDataUtils.storeMapInformation(context , fileName , musicInfoMap);
