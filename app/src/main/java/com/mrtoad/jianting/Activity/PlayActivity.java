@@ -21,6 +21,7 @@ import com.mrtoad.jianting.Broadcast.MediaMethods;
 import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
 import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
 import com.mrtoad.jianting.Constants.LocalListConstants;
+import com.mrtoad.jianting.Constants.MediaPlayModelConstants;
 import com.mrtoad.jianting.Constants.SPDataConstants;
 import com.mrtoad.jianting.Constants.ToastConstants;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
@@ -57,6 +58,10 @@ public class PlayActivity extends AppCompatActivity {
     private boolean isTrackingTouch = false;
     private MediaBroadcastReceiver mediaBroadcastReceiver = new MediaBroadcastReceiver();
     private List<String> musicList = new ArrayList<>();
+    private ImageView playModelIcon;
+    // 获取当前播放模式
+    private int currentPlayModel;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,8 +78,10 @@ public class PlayActivity extends AppCompatActivity {
         totalPlayTime = findViewById(R.id.total_play_time);
         previousMusic = findViewById(R.id.previous_music);
         nextMusic = findViewById(R.id.next_music);
+        playModelIcon = findViewById(R.id.play_model_icon);
 
         iLikedMusicEntity = getIntent().getParcelableExtra(ACTION_KEY_I_LIKED_MUSIC_ENTITY);
+        currentPlayModel = GlobalDataManager.getInstance().getCurrentPlayModel(this);
 
         setData();
 
@@ -139,7 +146,7 @@ public class PlayActivity extends AppCompatActivity {
             int currentIndex = musicList.indexOf(iLikedMusicEntity.getMusicName());
             if (currentIndex - 1 >= 0) {
                 int preIndex = currentIndex - 1;
-                switchPlayAndUpdateData(preIndex);
+                switchPlayAndUpdateData(preIndex , null);
             } else {
                 ToastUtils.showToast(PlayActivity.this , ToastConstants.NO_PREVIOUS_MUSIC);
             }
@@ -152,10 +159,26 @@ public class PlayActivity extends AppCompatActivity {
             int currentIndex = musicList.indexOf(iLikedMusicEntity.getMusicName());
             if (currentIndex + 1 < musicList.size()) {
                 int nextIndex = currentIndex + 1;
-                switchPlayAndUpdateData(nextIndex);
+                switchPlayAndUpdateData(nextIndex , null);
             } else {
                 ToastUtils.showToast(PlayActivity.this , ToastConstants.NO_NEXT_MUSIC);
             }
+        });
+
+        /**
+         * 监听顺序播放事件
+         */
+        mediaBroadcastReceiver.setOnSequencePlayListener((item) -> {
+            int playIndex = musicList.indexOf(item.getMusicName());
+            switchPlayAndUpdateData(playIndex , item);
+        });
+
+        /**
+         * 播放模式切换（更新)
+         */
+        updatePlayModel();
+        playModelIcon.setOnClickListener((v) -> {
+            changePlayModel();
         });
     }
 
@@ -163,11 +186,15 @@ public class PlayActivity extends AppCompatActivity {
      * 根据索引获取歌曲名称，最后将歌曲名当做 Key，获取上一首歌曲的实体对象
      * @param index 歌曲索引
      */
-    private void switchPlayAndUpdateData(int index) {
-        String musicName = musicList.get(index);
-        ILikedMusicEntity musicEntity = GlobalMethodsUtils.getMusicEntityByMusicName(PlayActivity.this, musicName);
-        MediaMethods.switchPlay(PlayActivity.this , musicEntity);
-        this.iLikedMusicEntity = musicEntity;
+    private void switchPlayAndUpdateData(int index , ILikedMusicEntity iLikedMusicEntity) {
+        if (iLikedMusicEntity == null) {
+            String musicName = musicList.get(index);
+            ILikedMusicEntity nextMusicEntity = GlobalMethodsUtils.getMusicEntityByMusicName(PlayActivity.this, musicName);
+            MediaMethods.switchPlay(PlayActivity.this , nextMusicEntity);
+            this.iLikedMusicEntity = nextMusicEntity;
+        } else {
+            this.iLikedMusicEntity = iLikedMusicEntity;
+        }
 
         GlobalDataManager.getInstance().setPlaying(true);
         GlobalMethodsUtils.setPlayButton(playButton);
@@ -175,7 +202,7 @@ public class PlayActivity extends AppCompatActivity {
         cannelPlayerTimer();
         startPlayerTimer();
 
-        SPDataUtils.storageInformation(PlayActivity.this , SPDataConstants.LAST_PLAY , musicName);
+        SPDataUtils.storageInformation(PlayActivity.this , SPDataConstants.LAST_PLAY , iLikedMusicEntity.getMusicName());
         StandardBroadcastMethods.updateBottomPlayerUi(PlayActivity.this , iLikedMusicEntity);
     }
 
@@ -240,11 +267,36 @@ public class PlayActivity extends AppCompatActivity {
         GlobalMethodsUtils.setPlayButton(playButton);
     }
 
+    /**
+     * 更新播放模式到 UI
+     */
+    private void updatePlayModel() {
+        if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_SEQUENCE) {
+            playModelIcon.setImageResource(R.drawable.sequence_play);
+        } else if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_CYCLE) {
+            playModelIcon.setImageResource(R.drawable.cycle_play);
+        }
+        SPDataUtils.storageInformation(PlayActivity.this , SPDataConstants.PLAY_MODEL , String.valueOf(currentPlayModel));
+    }
+
+    private void changePlayModel() {
+        currentPlayModel = currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_SEQUENCE ? MediaPlayModelConstants.PLAY_MODEL_CYCLE : MediaPlayModelConstants.PLAY_MODEL_SEQUENCE;
+        if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_SEQUENCE) {
+            ToastUtils.showToast(PlayActivity.this , MediaPlayModelConstants.PLAY_MODEL_SEQUENCE_TEXT);
+        } else {
+            ToastUtils.showToast(PlayActivity.this , MediaPlayModelConstants.PLAY_MODEL_CYCLE_TEXT);
+        }
+        updatePlayModel();
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
 
-        registerReceiver(mediaBroadcastReceiver , new IntentFilter(MediaBroadcastAction.ACTION_FINISH) , RECEIVER_EXPORTED);
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(MediaBroadcastAction.ACTION_FINISH);
+        intentFilter.addAction(MediaBroadcastAction.ACTION_SEQUENCE_PLAY);
+        registerReceiver(mediaBroadcastReceiver , intentFilter , RECEIVER_EXPORTED);
     }
 
     @Override

@@ -11,11 +11,18 @@ import android.util.Log;
 
 import com.mrtoad.jianting.Broadcast.MediaMethods;
 import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
+import com.mrtoad.jianting.Constants.LocalListConstants;
+import com.mrtoad.jianting.Constants.MediaPlayModelConstants;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
 import com.mrtoad.jianting.GlobalDataManager;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnFinishListener;
+import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnSequencePlayListener;
+import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
+import com.mrtoad.jianting.Utils.SPDataUtils;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 public class PlayService extends Service {
 
@@ -28,9 +35,16 @@ public class PlayService extends Service {
             return PlayService.this;
         }
     }
+    private ILikedMusicEntity currentPlayEntity;
+    private List<String> musicList;
+
     private OnFinishListener onFinishListener;
     public void setOnFinishListener(OnFinishListener onFinishListener) {
         this.onFinishListener = onFinishListener;
+    }
+    private OnSequencePlayListener onSequencePlayListener;
+    public void setOnSequencePlayListener(OnSequencePlayListener onSequencePlayListener) {
+        this.onSequencePlayListener = onSequencePlayListener;
     }
 
     @Override
@@ -42,6 +56,25 @@ public class PlayService extends Service {
                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                 .setUsage(AudioAttributes.USAGE_MEDIA)
                 .build());
+
+        /**
+         * 播放完成监听
+         */
+        player.setOnCompletionListener((mediaPlayer) -> {
+            isPrepared = false;  // 播放完成后重置状态
+
+            int currentPlayModel = GlobalDataManager.getInstance().getCurrentPlayModel(this);
+            // 根据不同的播放模式采取不同的播放策略
+            if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_SEQUENCE) {
+                playNextMusic();
+            } else if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_CYCLE) {
+                play(currentPlayEntity);
+            }
+            // 暂时不需要用到播完暂停。但是代码先保留
+//            if (currentPlayEntity != null) {
+//                onFinishListener.onFinish(currentPlayEntity);
+//            }
+        });
     }
 
     /**
@@ -69,17 +102,31 @@ public class PlayService extends Service {
                 isPrepared = true;
                 mediaPlayer.start();
                 GlobalDataManager.getInstance().setPlayer(player);
+                currentPlayEntity = iLikedMusicEntity;
             }));
         } catch (IOException e) {
             Log.d("@@@" , "播放失败 : " + e.getMessage());
         }
+    }
 
-        player.setOnCompletionListener((mediaPlayer) -> {
-            isPrepared = false;  // 播放完成后重置状态
-            GlobalDataManager.getInstance().setPlaying(false);
+    /**
+     * 播放下一首歌曲
+     */
+    public void playNextMusic() {
+        musicList = SPDataUtils.getLocalList(this , LocalListConstants.LOCAL_LIST_I_LIKED_MUSIC);
+        Collections.reverse(musicList);
 
-            onFinishListener.onFinish(iLikedMusicEntity);
-        });
+        int playIndex = musicList.indexOf(currentPlayEntity.getMusicName());
+        String nextMusicName;
+        if (playIndex + 1 < musicList.size()) {
+            nextMusicName = musicList.get(playIndex + 1);
+        } else {
+            nextMusicName = musicList.get(0);
+        }
+
+        ILikedMusicEntity nextMusicEntity = GlobalMethodsUtils.getMusicEntityByMusicName(this , nextMusicName);
+        play(nextMusicEntity);
+        onSequencePlayListener.onSequencePlay(nextMusicEntity);
     }
 
     /**

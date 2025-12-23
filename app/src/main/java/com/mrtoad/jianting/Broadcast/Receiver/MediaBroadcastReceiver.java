@@ -10,6 +10,7 @@ import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnFinishListener;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnPauseListener;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnPlayListener;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnProgressChanged;
+import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnSequencePlayListener;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnSwitchPlayListener;
 
 import java.util.Objects;
@@ -44,6 +45,11 @@ public class MediaBroadcastReceiver extends BroadcastReceiver {
         this.onSwitchPlayListener = onSwitchPlayListener;
     }
 
+    private OnSequencePlayListener onSequencePlayListener;
+    public void setOnSequencePlayListener(OnSequencePlayListener onSequencePlayListener) {
+        this.onSequencePlayListener = onSequencePlayListener;
+    }
+
     @Override
     public void onReceive(Context context, Intent intent) {
         if (Objects.equals(intent.getAction(), MediaBroadcastAction.ACTION_PLAY)) {
@@ -57,9 +63,12 @@ public class MediaBroadcastReceiver extends BroadcastReceiver {
         } else if (intent.getAction() == MediaBroadcastAction.ACTION_PROGRESS_CHANGED) {
             int progress = intent.getIntExtra(ACTION_KEY_PROGRESS_CHANGED, 0);
             onProgressChanged.onProgressChanged(progress);
-        } else {
+        } else if (intent.getAction() == MediaBroadcastAction.ACTION_SWITCH_PLAY) {
             ILikedMusicEntity iLikedMusicEntity = intent.getParcelableExtra(ACTION_KEY_I_LIKED_MUSIC_ENTITY);
             onSwitchPlayListener.onSwitchPlay(iLikedMusicEntity);
+        } else if (intent.getAction() == MediaBroadcastAction.ACTION_SEQUENCE_PLAY) {
+            ILikedMusicEntity iLikedMusicEntity = intent.getParcelableExtra(ACTION_KEY_I_LIKED_MUSIC_ENTITY);
+            onSequencePlayListener.onSequencePlay(iLikedMusicEntity);
         }
     }
 }

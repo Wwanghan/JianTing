@@ -54,6 +54,12 @@ public class MainActivity extends AppCompatActivity {
                 MediaMethods.finishMusic(MainActivity.this , iLikedMusicEntity);
             });
 
+            // 发送一条顺序播放的播放事件
+            playService.setOnSequencePlayListener((iLikedMusicEntity -> {
+                StandardBroadcastMethods.updateBottomPlayerUi(MainActivity.this , iLikedMusicEntity);
+                MediaMethods.sequencePlay(MainActivity.this , iLikedMusicEntity);
+            }));
+
         }
 
         @Override

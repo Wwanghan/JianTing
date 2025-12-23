@@ -44,12 +44,12 @@ public class GlobalMethodsUtils {
 
     /**
      * 根据音乐名称（Key）获取音乐实体对象
-     * @param activity
-     * @param musicName
-     * @return
+     * @param context Context
+     * @param musicName 音乐名称
+     * @return 音乐实体对象
      */
-    public static ILikedMusicEntity getMusicEntityByMusicName(Activity activity , String musicName) {
-        Map<String, String> musicMapInformation = SPDataUtils.getMapInformation(activity, musicName);
+    public static ILikedMusicEntity getMusicEntityByMusicName(Context context , String musicName) {
+        Map<String, String> musicMapInformation = SPDataUtils.getMapInformation(context, musicName);
         ILikedMusicEntity iLikedMusicEntity = new ILikedMusicEntity(
                 musicMapInformation.get(MusicInfoConstants.MUSIC_INFO_COVER),
                 musicMapInformation.get(MusicInfoConstants.MUSIC_INFO_NAME),

@@ -62,4 +62,15 @@ public class MediaMethods {
         switchPlayIntent.putExtra(MediaBroadcastReceiver.ACTION_KEY_I_LIKED_MUSIC_ENTITY , iLikedMusicEntity);
         activity.sendBroadcast(switchPlayIntent.setPackage(activity.getPackageName()));
     }
+
+    /**
+     * 发送一条顺序播放的广播
+     * @param activity Activity
+     * @param iLikedMusicEntity 音乐实体
+     */
+    public static void sequencePlay(Activity activity , ILikedMusicEntity iLikedMusicEntity) {
+        Intent sequencePlayIntent = new Intent(MediaBroadcastAction.ACTION_SEQUENCE_PLAY);
+        sequencePlayIntent.putExtra(MediaBroadcastReceiver.ACTION_KEY_I_LIKED_MUSIC_ENTITY , iLikedMusicEntity);
+        activity.sendBroadcast(sequencePlayIntent.setPackage(activity.getPackageName()));
+    }
 }
