@@ -145,10 +145,9 @@ public class PlayActivity extends AppCompatActivity {
         previousMusic.setOnClickListener((v) -> {
             int currentIndex = musicList.indexOf(iLikedMusicEntity.getMusicName());
             if (currentIndex - 1 >= 0) {
-                int preIndex = currentIndex - 1;
-                switchPlayAndUpdateData(preIndex , null);
+                switchPlayAndUpdateData(currentIndex - 1);
             } else {
-                ToastUtils.showToast(PlayActivity.this , ToastConstants.NO_PREVIOUS_MUSIC);
+                switchPlayAndUpdateData(musicList.size() - 1);
             }
         });
 
@@ -158,10 +157,9 @@ public class PlayActivity extends AppCompatActivity {
         nextMusic.setOnClickListener((v) -> {
             int currentIndex = musicList.indexOf(iLikedMusicEntity.getMusicName());
             if (currentIndex + 1 < musicList.size()) {
-                int nextIndex = currentIndex + 1;
-                switchPlayAndUpdateData(nextIndex , null);
+                switchPlayAndUpdateData(currentIndex + 1);
             } else {
-                ToastUtils.showToast(PlayActivity.this , ToastConstants.NO_NEXT_MUSIC);
+                switchPlayAndUpdateData(0);
             }
         });
 
@@ -169,8 +167,8 @@ public class PlayActivity extends AppCompatActivity {
          * 监听顺序播放事件
          */
         mediaBroadcastReceiver.setOnSequencePlayListener((item) -> {
-            int playIndex = musicList.indexOf(item.getMusicName());
-            switchPlayAndUpdateData(playIndex , item);
+            iLikedMusicEntity = item;
+            updateData();
         });
 
         /**
@@ -186,24 +184,29 @@ public class PlayActivity extends AppCompatActivity {
      * 根据索引获取歌曲名称，最后将歌曲名当做 Key，获取上一首歌曲的实体对象
      * @param index 歌曲索引
      */
-    private void switchPlayAndUpdateData(int index , ILikedMusicEntity iLikedMusicEntity) {
-        if (iLikedMusicEntity == null) {
-            String musicName = musicList.get(index);
-            ILikedMusicEntity nextMusicEntity = GlobalMethodsUtils.getMusicEntityByMusicName(PlayActivity.this, musicName);
-            MediaMethods.switchPlay(PlayActivity.this , nextMusicEntity);
-            this.iLikedMusicEntity = nextMusicEntity;
-        } else {
-            this.iLikedMusicEntity = iLikedMusicEntity;
-        }
+    private void switchPlayAndUpdateData(int index) {
+        String musicName = musicList.get(index);
+        ILikedMusicEntity nextMusicEntity = GlobalMethodsUtils.getMusicEntityByMusicName(PlayActivity.this, musicName);
+        MediaMethods.switchPlay(PlayActivity.this , nextMusicEntity);
+        iLikedMusicEntity = nextMusicEntity;
 
+        updateData();
+    }
+
+    /**
+     * 更新数据
+     */
+    private void updateData() {
+        // 更新全局数据
         GlobalDataManager.getInstance().setPlaying(true);
+        StandardBroadcastMethods.updateBottomPlayerUi(PlayActivity.this , iLikedMusicEntity);
+        SPDataUtils.storageInformation(PlayActivity.this , SPDataConstants.LAST_PLAY , iLikedMusicEntity.getMusicName());
+        // 更新当前 UI
         GlobalMethodsUtils.setPlayButton(playButton);
         setData();
+        // 重新开始计时
         cannelPlayerTimer();
         startPlayerTimer();
-
-        SPDataUtils.storageInformation(PlayActivity.this , SPDataConstants.LAST_PLAY , iLikedMusicEntity.getMusicName());
-        StandardBroadcastMethods.updateBottomPlayerUi(PlayActivity.this , iLikedMusicEntity);
     }
 
     /**

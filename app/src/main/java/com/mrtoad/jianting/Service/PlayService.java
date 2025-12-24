@@ -29,6 +29,7 @@ public class PlayService extends Service {
     private MediaPlayer player;
     private String currentFilePath;
     private boolean isPrepared = false;
+    private boolean isManualSwitch = false;
     private final IBinder myBinder = new MyBinder();
     public class MyBinder extends Binder {
         public PlayService getService() {
@@ -56,25 +57,6 @@ public class PlayService extends Service {
                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                 .setUsage(AudioAttributes.USAGE_MEDIA)
                 .build());
-
-        /**
-         * 播放完成监听
-         */
-        player.setOnCompletionListener((mediaPlayer) -> {
-            isPrepared = false;  // 播放完成后重置状态
-
-            int currentPlayModel = GlobalDataManager.getInstance().getCurrentPlayModel(this);
-            // 根据不同的播放模式采取不同的播放策略
-            if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_SEQUENCE) {
-                playNextMusic();
-            } else if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_CYCLE) {
-                play(currentPlayEntity);
-            }
-            // 暂时不需要用到播完暂停。但是代码先保留
-//            if (currentPlayEntity != null) {
-//                onFinishListener.onFinish(currentPlayEntity);
-//            }
-        });
     }
 
     /**
@@ -90,27 +72,58 @@ public class PlayService extends Service {
             return;
         }
 
+        // 在重置前移除监听器，避免触发 onCompletion
+        if (player != null) { player.setOnCompletionListener(null); }
+
         // 如果是新歌，那么则需要重新播放
         resetPlayer();
         currentFilePath = iLikedMusicEntity.getMusicFilePath();
 
         try {
             player.setDataSource(iLikedMusicEntity.getMusicFilePath());
-            player.prepareAsync();  // 使用异步准备防止ANR
+            player.prepare();
+            player.start();
 
-            player.setOnPreparedListener((mediaPlayer -> {
-                isPrepared = true;
-                mediaPlayer.start();
-                GlobalDataManager.getInstance().setPlayer(player);
-                currentPlayEntity = iLikedMusicEntity;
-            }));
+            isPrepared = true;
+            GlobalDataManager.getInstance().setPlayer(player);
+            currentPlayEntity = iLikedMusicEntity;
+
+            /**
+             * 播放完成监听
+             */
+            player.setOnCompletionListener((mediaPlayer) -> {
+                /**
+                 * 防止切换上下首歌曲时，又触发播放完成监听。导致播放混乱。至于为什么，我还没有研究明白
+                 * 所以使用一个标志位，避免切换时触发此监听时，程序继续往下执行。也就解决了问题
+                 * 但是，这并不是一个从根源解决的好办法。不过，暂且不深究，先记录下来
+                 */
+                if (isManualSwitch) {
+                    isManualSwitch = false;
+                    return;
+                }
+
+                isPrepared = false;  // 播放完成后重置状态
+
+                int currentPlayModel = GlobalDataManager.getInstance().getCurrentPlayModel(this);
+                // 根据不同的播放模式采取不同的播放策略
+                if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_SEQUENCE) {
+                    playNextMusic();
+                } else if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_CYCLE) {
+                    play(currentPlayEntity);
+                }
+                // 暂时不需要用到播完暂停。但是代码先保留
+//            if (currentPlayEntity != null) {
+//                onFinishListener.onFinish(currentPlayEntity);
+//            }
+            });
+
         } catch (IOException e) {
             Log.d("@@@" , "播放失败 : " + e.getMessage());
         }
     }
 
     /**
-     * 播放下一首歌曲
+     * 播放下一首歌曲（主要用于顺序播放）
      */
     public void playNextMusic() {
         musicList = SPDataUtils.getLocalList(this , LocalListConstants.LOCAL_LIST_I_LIKED_MUSIC);
@@ -130,6 +143,15 @@ public class PlayService extends Service {
     }
 
     /**
+     * 切换播放音乐
+     * @param iLikedMusicEntity 音乐实体
+     */
+    public void switchPlay(ILikedMusicEntity iLikedMusicEntity) {
+        isManualSwitch = true;
+        play(iLikedMusicEntity);
+    }
+
+    /**
      * 暂停播放
      */
     public void pause() {
@@ -146,14 +168,6 @@ public class PlayService extends Service {
         if (player != null) {
             player.seekTo(progress);
         }
-    }
-
-    /**
-     * 切换播放音乐
-     * @param iLikedMusicEntity 音乐实体
-     */
-    public void switchPlay(ILikedMusicEntity iLikedMusicEntity) {
-        play(iLikedMusicEntity);
     }
 
     /**
