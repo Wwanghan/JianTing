@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="@drawable/background_rounded"
+        android:background="@drawable/i_liked_music_item_background"
         android:padding="15dp"
         android:gravity="center_vertical"
         >
@@ -39,6 +39,8 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/text_color"
                 android:textSize="18dp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 />
 
             <TextView
@@ -47,6 +49,8 @@
                 android:layout_height="wrap_content"
                 android:textSize="12dp"
                 android:textColor="@color/text_gray"
+                android:maxLines="1"
+                android:ellipsize="end"
                 />
         </LinearLayout>
 

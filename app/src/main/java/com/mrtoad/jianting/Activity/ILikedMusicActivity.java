@@ -130,17 +130,19 @@ public class ILikedMusicActivity extends AppCompatActivity {
         });
 
         /**
+         * 点击上方播放按钮，播放当前类表第一首歌曲
+         */
+        playButton.setOnClickListener((v) -> {
+            MediaMethods.playMusic(this , iLIkedMusicList.get(0));
+            updateUiAndData(iLIkedMusicList.get(0));
+        });
+
+        /**
          * 监听音乐项的点击事件
          */
         iLikedMusicAdapter.setOnClickListener((iLikedMusicEntity) -> {
             MediaMethods.playMusic(ILikedMusicActivity.this , iLikedMusicEntity);
-
-            if (bottomPlayerFragment.isHidden()) { FragmentUtils.showFragment(fragmentManager , bottomPlayerFragment); }
-            GlobalDataManager.getInstance().setPlaying(true);
-            // 更新底部音乐导航 UI，并将正在播放的音乐名保存起来。最后通知 MainActivity 那边更新 UI
-            bottomPlayerFragment.updateUi(iLikedMusicEntity);
-            SPDataUtils.storageInformation(ILikedMusicActivity.this , SPDataConstants.LAST_PLAY , iLikedMusicEntity.getMusicName());
-            StandardBroadcastMethods.updateBottomPlayerUi(ILikedMusicActivity.this , iLikedMusicEntity);
+            updateUiAndData(iLikedMusicEntity);
         });
 
         /**
@@ -169,6 +171,20 @@ public class ILikedMusicActivity extends AppCompatActivity {
             bottomPlayerFragment.updateUi(iLikedMusicEntity);
         }));
 
+    }
+
+    /**
+     * 更新 UI 和数据
+     */
+    private void updateUiAndData(ILikedMusicEntity iLikedMusicEntity) {
+        if (bottomPlayerFragment.isHidden()) { FragmentUtils.showFragment(fragmentManager , bottomPlayerFragment); }
+        GlobalDataManager.getInstance().setPlaying(true);
+
+        // 更新当前页面底部音乐导航 UI 和 MainActivity 底部音乐导航 UI，并将当前播放的音乐存储起来
+        bottomPlayerFragment.updateUi(iLikedMusicEntity);
+        StandardBroadcastMethods.updateBottomPlayerUi(this , iLikedMusicEntity);
+
+        SPDataUtils.storageInformation(this , SPDataConstants.LAST_PLAY , iLikedMusicEntity.getMusicName());
     }
 
     /**

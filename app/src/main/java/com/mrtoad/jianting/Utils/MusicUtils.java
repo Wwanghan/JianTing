@@ -43,10 +43,14 @@ public class MusicUtils {
         File file = saveMusicFile(context, uri);
 
         // 保存音乐信息
-        assert file != null;
-        saveMusicInfo(context , file);
+        if (file != null) {
+            saveMusicInfo(context , file);
+            TipDialog.show(DialogConstants.TIP_DIALOG_IMPORT_MUSIC_SUCCESS , WaitDialog.TYPE.SUCCESS);
+        } else {
+            // 返回 null，说明文件已经存在
+            TipDialog.show(DialogConstants.TIP_DIALOG_IMPORT_MUSIC_EXIST , WaitDialog.TYPE.WARNING);
+        }
 
-        TipDialog.show(DialogConstants.TIP_DIALOG_IMPORT_MUSIC_SUCCESS , WaitDialog.TYPE.SUCCESS);
     }
 
     @SuppressLint("ResourceType")
@@ -90,6 +94,9 @@ public class MusicUtils {
 
         // 创建文件
         File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), fileName);
+        if (file.exists()) {
+            return null;
+        }
 
         try {
             InputStream inputStream = context.getContentResolver().openInputStream(uri);
