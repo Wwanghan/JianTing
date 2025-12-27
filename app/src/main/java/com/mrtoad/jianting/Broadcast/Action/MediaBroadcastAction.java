@@ -7,4 +7,6 @@ public class MediaBroadcastAction {
     public static final String ACTION_PROGRESS_CHANGED = "com.mrtoad.jianting.ACTION_PROGRESS_CHANGED";
     public static final String ACTION_SWITCH_PLAY = "com.mrtoad.jianting.ACTION_SWITCH_PLAY";
     public static final String ACTION_SEQUENCE_PLAY = "com.mrtoad.jianting.ACTION_SEQUENCE_PLAY";
+    public static final String ACTION_MEDIA_SESSION_CONTROL = "com.mrtoad.jianting.ACTION_MEDIA_SESSION_CONTROL";
+    public static final String ACTION_MEDIA_SESSION_UPDATE = "com.mrtoad.jianting.ACTION_MEDIA_SESSION_UPDATE";
 }

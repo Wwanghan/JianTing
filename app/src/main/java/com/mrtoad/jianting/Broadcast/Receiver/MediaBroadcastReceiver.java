@@ -7,6 +7,8 @@ import android.content.Intent;
 import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnFinishListener;
+import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnMediaSessionControlListener;
+import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnMediaSessionUpdateListener;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnPauseListener;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnPlayListener;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnProgressChanged;
@@ -50,6 +52,16 @@ public class MediaBroadcastReceiver extends BroadcastReceiver {
         this.onSequencePlayListener = onSequencePlayListener;
     }
 
+    private OnMediaSessionControlListener onMediaSessionControlListener;
+    public void setOnMediaSessionControlListener(OnMediaSessionControlListener onMediaSessionControlListener) {
+        this.onMediaSessionControlListener = onMediaSessionControlListener;
+    }
+
+    private OnMediaSessionUpdateListener onMediaSessionUpdateListener;
+    public void setOnMediaSessionUpdateListener(OnMediaSessionUpdateListener onMediaSessionUpdateListener) {
+        this.onMediaSessionUpdateListener = onMediaSessionUpdateListener;
+    }
+
     @Override
     public void onReceive(Context context, Intent intent) {
         if (Objects.equals(intent.getAction(), MediaBroadcastAction.ACTION_PLAY)) {
@@ -69,6 +81,12 @@ public class MediaBroadcastReceiver extends BroadcastReceiver {
         } else if (intent.getAction() == MediaBroadcastAction.ACTION_SEQUENCE_PLAY) {
             ILikedMusicEntity iLikedMusicEntity = intent.getParcelableExtra(ACTION_KEY_I_LIKED_MUSIC_ENTITY);
             onSequencePlayListener.onSequencePlay(iLikedMusicEntity);
+        } else if (intent.getAction() == MediaBroadcastAction.ACTION_MEDIA_SESSION_CONTROL) {
+            ILikedMusicEntity iLikedMusicEntity = intent.getParcelableExtra(ACTION_KEY_I_LIKED_MUSIC_ENTITY);
+            onMediaSessionControlListener.onMediaSessionControl(iLikedMusicEntity);
+        } else if (intent.getAction() == MediaBroadcastAction.ACTION_MEDIA_SESSION_UPDATE) {
+            int position = intent.getIntExtra(ACTION_KEY_PROGRESS_CHANGED, 0);
+            onMediaSessionUpdateListener.onMediaSessionUpdate(position);
         }
     }
 }

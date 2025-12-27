@@ -6,6 +6,23 @@
     android:background="@color/background_black"
     >
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingLeft="30dp"
+        android:paddingRight="30dp"
+        >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="还没想好主页面放什么，不过放心，核心功能我都开发完毕啦！可以放心食用🥰🥰"
+            android:layout_centerInParent="true"
+            android:textColor="@color/tiffany_blue"
+            android:textSize="24sp"
+            />
+    </RelativeLayout>
+
 
 
 </LinearLayout>

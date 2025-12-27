@@ -60,6 +60,11 @@ public class MainActivity extends AppCompatActivity {
                 MediaMethods.sequencePlay(MainActivity.this , iLikedMusicEntity);
             }));
 
+            playService.setOnMediaSessionControlListener((iLikedMusicEntity) -> {
+                StandardBroadcastMethods.updateBottomPlayerUi(MainActivity.this , iLikedMusicEntity);
+                MediaMethods.mediaSessionControl(MainActivity.this , iLikedMusicEntity);
+            });
+
         }
 
         @Override
@@ -158,6 +163,13 @@ public class MainActivity extends AppCompatActivity {
             playService.switchPlay(iLikedMusicEntity);
         }));
 
+        /**
+         * 监听媒体会话更新
+         */
+        mediaBroadcastReceiver.setOnMediaSessionUpdateListener((position) -> {
+            playService.updateMediaSession(position);
+        });
+
     }
 
     @Override
@@ -176,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
         intentFilter.addAction(MediaBroadcastAction.ACTION_PAUSE);
         intentFilter.addAction(MediaBroadcastAction.ACTION_PROGRESS_CHANGED);
         intentFilter.addAction(MediaBroadcastAction.ACTION_SWITCH_PLAY);
+        intentFilter.addAction(MediaBroadcastAction.ACTION_MEDIA_SESSION_UPDATE);
         registerReceiver(mediaBroadcastReceiver , intentFilter , RECEIVER_EXPORTED);
     }
 

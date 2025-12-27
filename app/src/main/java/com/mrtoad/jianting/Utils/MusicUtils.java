@@ -16,6 +16,7 @@ import com.kongzue.dialogx.dialogs.WaitDialog;
 import com.mrtoad.jianting.Constants.DialogConstants;
 import com.mrtoad.jianting.Constants.LocalListConstants;
 import com.mrtoad.jianting.Constants.MusicInfoConstants;
+import com.mrtoad.jianting.Entity.ILikedMusicEntity;
 import com.mrtoad.jianting.R;
 
 import java.io.File;
@@ -24,12 +25,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MusicUtils {
 
     private static final String TAG = "MusicUtils";
+    public static final String NEXT_MUSIC = "next_music";
+    public static final String PREVIOUS_MUSIC = "previous_music";
 
     /**
      * 保存音乐，其中包含两部分
@@ -130,6 +135,32 @@ public class MusicUtils {
             query.close();
         }
         return fileName;
+    }
+
+    /**
+     * 获取下一首或上一首歌曲
+     * @param context context
+     * @param musicName 歌曲名
+     * @param type 类型
+     * @return 歌曲实体信息
+     */
+    public static ILikedMusicEntity getNextOrPreviousMusic(Context context , String musicName , String type) {
+        List<String> localMusicList = SPDataUtils.getLocalList(context, LocalListConstants.LOCAL_LIST_I_LIKED_MUSIC);
+        Collections.reverse(localMusicList);
+
+        int resultIndex = 0;
+        int currentIndex = localMusicList.indexOf(musicName);
+
+        if (type.equals(NEXT_MUSIC)) {
+            resultIndex = currentIndex + 1 < localMusicList.size() ? currentIndex + 1 : 0;
+        } else if (type.equals(PREVIOUS_MUSIC)) {
+            resultIndex = currentIndex - 1 >= 0 ? currentIndex - 1 : localMusicList.size() - 1;
+        }
+
+        String name = localMusicList.get(resultIndex);
+        ILikedMusicEntity resultMusicEntity = GlobalMethodsUtils.getMusicEntityByMusicName(context, name);
+
+        return resultMusicEntity;
     }
 
 }

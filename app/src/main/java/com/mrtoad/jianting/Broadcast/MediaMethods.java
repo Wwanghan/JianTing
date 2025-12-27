@@ -73,4 +73,25 @@ public class MediaMethods {
         sequencePlayIntent.putExtra(MediaBroadcastReceiver.ACTION_KEY_I_LIKED_MUSIC_ENTITY , iLikedMusicEntity);
         activity.sendBroadcast(sequencePlayIntent.setPackage(activity.getPackageName()));
     }
+
+    /**
+     * 发送一条媒体会话控制广播
+     * @param activity Activity
+     * @param iLikedMusicEntity 音乐实体
+     */
+    public static void mediaSessionControl(Activity activity , ILikedMusicEntity iLikedMusicEntity) {
+        Intent mediaSessionControlIntent = new Intent(MediaBroadcastAction.ACTION_MEDIA_SESSION_CONTROL);
+        mediaSessionControlIntent.putExtra(MediaBroadcastReceiver.ACTION_KEY_I_LIKED_MUSIC_ENTITY , iLikedMusicEntity);
+        activity.sendBroadcast(mediaSessionControlIntent.setPackage(activity.getPackageName()));
+    }
+
+    /**
+     * 发送一条媒体会话更新广播
+     * @param activity Activity
+     */
+    public static void mediaSessionUpdate(Activity activity , int position) {
+        Intent mediaSessionUpdateIntent = new Intent(MediaBroadcastAction.ACTION_MEDIA_SESSION_UPDATE);
+        mediaSessionUpdateIntent.putExtra(MediaBroadcastReceiver.ACTION_KEY_PROGRESS_CHANGED , position);
+        activity.sendBroadcast(mediaSessionUpdateIntent.setPackage(activity.getPackageName()));
+    }
 }

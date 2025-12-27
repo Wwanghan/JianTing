@@ -30,6 +30,7 @@ import com.mrtoad.jianting.R;
 import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
 import com.mrtoad.jianting.Utils.GradientColorExtractor;
 import com.mrtoad.jianting.Utils.GradientUtils;
+import com.mrtoad.jianting.Utils.MusicUtils;
 import com.mrtoad.jianting.Utils.SPDataUtils;
 import com.mrtoad.jianting.Utils.TimeUtils;
 import com.mrtoad.jianting.Utils.ToastUtils;
@@ -107,6 +108,7 @@ public class PlayActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
                 isTrackingTouch = false;
                 MediaMethods.setProgress(PlayActivity.this , seekBar.getProgress());
+                MediaMethods.mediaSessionUpdate(PlayActivity.this , seekBar.getProgress());
             }
         });
 
@@ -143,30 +145,31 @@ public class PlayActivity extends AppCompatActivity {
          * 切换上一首歌曲
          */
         previousMusic.setOnClickListener((v) -> {
-            int currentIndex = musicList.indexOf(iLikedMusicEntity.getMusicName());
-            if (currentIndex - 1 >= 0) {
-                switchPlayAndUpdateData(currentIndex - 1);
-            } else {
-                switchPlayAndUpdateData(musicList.size() - 1);
-            }
+            ILikedMusicEntity previousMusicEntity = MusicUtils.getNextOrPreviousMusic(this, iLikedMusicEntity.getMusicName(), MusicUtils.PREVIOUS_MUSIC);
+            MediaMethods.switchPlay(this , previousMusicEntity);
+            iLikedMusicEntity = previousMusicEntity;
+            updateData();
         });
 
         /**
          * 切换下一首歌曲
          */
         nextMusic.setOnClickListener((v) -> {
-            int currentIndex = musicList.indexOf(iLikedMusicEntity.getMusicName());
-            if (currentIndex + 1 < musicList.size()) {
-                switchPlayAndUpdateData(currentIndex + 1);
-            } else {
-                switchPlayAndUpdateData(0);
-            }
+            ILikedMusicEntity nextMusicEntity = MusicUtils.getNextOrPreviousMusic(this, iLikedMusicEntity.getMusicName(), MusicUtils.NEXT_MUSIC);
+            MediaMethods.switchPlay(this , nextMusicEntity);
+            iLikedMusicEntity = nextMusicEntity;
+            updateData();
         });
 
         /**
          * 监听顺序播放事件
          */
         mediaBroadcastReceiver.setOnSequencePlayListener((item) -> {
+            iLikedMusicEntity = item;
+            updateData();
+        });
+
+        mediaBroadcastReceiver.setOnMediaSessionControlListener((item) -> {
             iLikedMusicEntity = item;
             updateData();
         });
@@ -178,19 +181,6 @@ public class PlayActivity extends AppCompatActivity {
         playModelIcon.setOnClickListener((v) -> {
             changePlayModel();
         });
-    }
-
-    /**
-     * 根据索引获取歌曲名称，最后将歌曲名当做 Key，获取上一首歌曲的实体对象
-     * @param index 歌曲索引
-     */
-    private void switchPlayAndUpdateData(int index) {
-        String musicName = musicList.get(index);
-        ILikedMusicEntity nextMusicEntity = GlobalMethodsUtils.getMusicEntityByMusicName(PlayActivity.this, musicName);
-        MediaMethods.switchPlay(PlayActivity.this , nextMusicEntity);
-        iLikedMusicEntity = nextMusicEntity;
-
-        updateData();
     }
 
     /**
@@ -299,6 +289,7 @@ public class PlayActivity extends AppCompatActivity {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(MediaBroadcastAction.ACTION_FINISH);
         intentFilter.addAction(MediaBroadcastAction.ACTION_SEQUENCE_PLAY);
+        intentFilter.addAction(MediaBroadcastAction.ACTION_MEDIA_SESSION_CONTROL);
         registerReceiver(mediaBroadcastReceiver , intentFilter , RECEIVER_EXPORTED);
     }
 

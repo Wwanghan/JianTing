@@ -52,5 +52,6 @@ dependencies {
     implementation libs.glide
     implementation libs.gson
     implementation libs.dialogx
-    implementation 'androidx.palette:palette:1.0.0'
+    implementation libs.palette
+    implementation libs.media.v171
 }
