@@ -3,8 +3,6 @@ package com.mrtoad.jianting.Activity;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Handler;
-import android.util.Log;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -12,24 +10,22 @@ import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.Broadcast.MediaMethods;
 import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
 import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
 import com.mrtoad.jianting.Constants.LocalListConstants;
+import com.mrtoad.jianting.Constants.MapConstants;
 import com.mrtoad.jianting.Constants.MediaPlayModelConstants;
+import com.mrtoad.jianting.Constants.MusicInfoConstants;
 import com.mrtoad.jianting.Constants.SPDataConstants;
-import com.mrtoad.jianting.Constants.ToastConstants;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
 import com.mrtoad.jianting.GlobalDataManager;
 import com.mrtoad.jianting.R;
 import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
-import com.mrtoad.jianting.Utils.GradientColorExtractor;
 import com.mrtoad.jianting.Utils.GradientUtils;
+import com.mrtoad.jianting.Utils.KMeansColorExtractor;
 import com.mrtoad.jianting.Utils.MusicUtils;
 import com.mrtoad.jianting.Utils.SPDataUtils;
 import com.mrtoad.jianting.Utils.TimeUtils;
@@ -38,6 +34,7 @@ import com.mrtoad.jianting.Utils.ToastUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -243,10 +240,26 @@ public class PlayActivity extends AppCompatActivity {
     private void setData() {
         // 设置动态渐变背景
         if (iLikedMusicEntity.getMusicCover() != null) {
-            GradientColorExtractor.setGradientFromFilePathSync(root , iLikedMusicEntity.getMusicCover() , 135);
+            // 根据添加封面时，保存在本地的音乐主次颜色来直接设置。
+            String mapKey = iLikedMusicEntity.getMusicName() + MapConstants.MUSIC_COVER_COLOR_MAP_SUFFIX;
+            if (SPDataUtils.getMapInformation(this , mapKey) != null) {
+                Map<String, String> musicCoverColorsMap = SPDataUtils.getMapInformation(this, mapKey);
+                GradientUtils.setGradientBackground(
+                        root,
+                        Integer.parseInt(musicCoverColorsMap.get(MusicInfoConstants.MUSIC_INFO_PRIMARY_COLOR)),
+                        Integer.parseInt(musicCoverColorsMap.get(MusicInfoConstants.MUSIC_INFO_SECONDARY_COLOR)),
+                        90
+                );
+            } else {
+                // 做两手准备。万一本地没有存储。万一有 BUG。在本地没有找到的情况下，直接从图片中提取
+                KMeansColorExtractor.extractColorsFromFilePath(root , iLikedMusicEntity.getMusicCover() , 90 , null);
+            }
         } else {
             Bitmap bitmap = GlobalMethodsUtils.getBitmapFromVectorDrawable(PlayActivity.this, R.drawable.music_cover_default);
-            GradientColorExtractor.setGradientFromBitmapSync(root , bitmap , 135);
+            KMeansColorExtractor.extractColorsFromBitmapSync(root , bitmap , 90);
+            if (bitmap != null && !bitmap.isRecycled()) {
+                bitmap.recycle();
+            }
         }
 
         GlobalMethodsUtils.setMusicCover(PlayActivity.this , musicCover , iLikedMusicEntity.getMusicCover());

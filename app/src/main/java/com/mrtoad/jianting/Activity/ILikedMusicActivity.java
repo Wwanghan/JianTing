@@ -36,6 +36,7 @@ import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
 import com.mrtoad.jianting.Broadcast.Receiver.StandardBroadcastReceiver;
 import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
 import com.mrtoad.jianting.Constants.LocalListConstants;
+import com.mrtoad.jianting.Constants.MapConstants;
 import com.mrtoad.jianting.Constants.MusicInfoConstants;
 import com.mrtoad.jianting.Constants.SPDataConstants;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
@@ -44,6 +45,7 @@ import com.mrtoad.jianting.GlobalDataManager;
 import com.mrtoad.jianting.R;
 import com.mrtoad.jianting.Utils.FragmentUtils;
 import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
+import com.mrtoad.jianting.Utils.KMeansColorExtractor;
 import com.mrtoad.jianting.Utils.SPDataUtils;
 import com.mrtoad.jianting.Utils.ToastUtils;
 
@@ -54,6 +56,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -211,6 +214,18 @@ public class ILikedMusicActivity extends AppCompatActivity {
                     inputStream.close();
                     fileOutputStream.close();
                     SPDataUtils.updateMapInformation(this , longClickedMusicName , MusicInfoConstants.MUSIC_INFO_COVER , outputFIle.getAbsolutePath());
+
+                    /**
+                     * 获取图片主次颜色，并保存在本地
+                     */
+                    KMeansColorExtractor.extractColorsOnlyFromFilePath(outputFIle.getAbsolutePath() , (primaryColor , secondaryColor) -> {
+                        Map<String , String> musicCoverColorsMap = new HashMap<>();
+                        musicCoverColorsMap.put(MusicInfoConstants.MUSIC_INFO_PRIMARY_COLOR , String.valueOf(primaryColor));
+                        musicCoverColorsMap.put(MusicInfoConstants.MUSIC_INFO_SECONDARY_COLOR , String.valueOf(secondaryColor));
+
+                        String mapKey = longClickedMusicName + MapConstants.MUSIC_COVER_COLOR_MAP_SUFFIX;
+                        SPDataUtils.storeMapInformation(this , mapKey , musicCoverColorsMap);
+                    });
 
                     /**
                      * 更新 UI，更新底部播放器 UI

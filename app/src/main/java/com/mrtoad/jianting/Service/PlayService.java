@@ -90,6 +90,34 @@ public class PlayService extends Service {
                 .setUsage(AudioAttributes.USAGE_MEDIA)
                 .build());
 
+        /**
+         * 问题：我在切换上一首或下一首歌曲时，会重复调用 setOnCompletionListener，导致一下子切了两首歌曲
+         * 原因：因为在歌曲播放的时候，突然切歌 MediaPlayer 会报错，这个错误又会回调别的方法，导致最后触发 setOnCompletionListener
+         * 解决：添加 setOnErrorListener 错误监听，返回为 true，手动拦截错误
+         */
+        player.setOnErrorListener((mediaPlayer, what, extra) -> {
+            return true;
+        });
+
+        /**
+         * 播放完成监听
+         */
+        player.setOnCompletionListener((mediaPlayer) -> {
+            isPrepared = false;  // 播放完成后重置状态
+
+            int currentPlayModel = GlobalDataManager.getInstance().getCurrentPlayModel(this);
+            // 根据不同的播放模式采取不同的播放策略
+            if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_SEQUENCE) {
+                playNextMusic();
+            } else if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_CYCLE) {
+                play(currentPlayEntity);
+            }
+            // 暂时不需要用到播完暂停。但是代码先保留
+//            if (currentPlayEntity != null) {
+//                onFinishListener.onFinish(currentPlayEntity);
+//            }
+        });
+
         initMediaSession();
 
         // 创建音乐播放会话渠道，如果已经创建，则不再创建
@@ -120,9 +148,6 @@ public class PlayService extends Service {
             return;
         }
 
-        // 在重置前移除监听器，避免触发 onCompletion
-        if (player != null) { player.setOnCompletionListener(null); }
-
         // 如果是新歌，那么则需要重新播放
         resetPlayer();
         currentFilePath = iLikedMusicEntity.getMusicFilePath();
@@ -138,36 +163,6 @@ public class PlayService extends Service {
 
             updateNotificationAndMetadata();
             setPlaybackState(PlaybackStateCompat.STATE_PLAYING , 0);
-
-
-            /**
-             * 播放完成监听
-             */
-            player.setOnCompletionListener((mediaPlayer) -> {
-                /**
-                 * 防止切换上下首歌曲时，又触发播放完成监听。导致播放混乱。至于为什么，我还没有研究明白
-                 * 所以使用一个标志位，避免切换时触发此监听时，程序继续往下执行。也就解决了问题
-                 * 但是，这并不是一个从根源解决的好办法。不过，暂且不深究，先记录下来
-                 */
-                if (isManualSwitch) {
-                    isManualSwitch = false;
-                    return;
-                }
-
-                isPrepared = false;  // 播放完成后重置状态
-
-                int currentPlayModel = GlobalDataManager.getInstance().getCurrentPlayModel(this);
-                // 根据不同的播放模式采取不同的播放策略
-                if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_SEQUENCE) {
-                    playNextMusic();
-                } else if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_CYCLE) {
-                    play(currentPlayEntity);
-                }
-                // 暂时不需要用到播完暂停。但是代码先保留
-//            if (currentPlayEntity != null) {
-//                onFinishListener.onFinish(currentPlayEntity);
-//            }
-            });
 
         } catch (IOException e) {
             Log.d("@@@" , "播放失败 : " + e.getMessage());
