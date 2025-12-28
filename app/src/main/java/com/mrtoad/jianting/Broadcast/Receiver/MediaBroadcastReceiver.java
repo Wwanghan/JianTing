@@ -21,6 +21,7 @@ public class MediaBroadcastReceiver extends BroadcastReceiver {
 
     public static final String ACTION_KEY_I_LIKED_MUSIC_ENTITY = "iLikedMusicEntity";
     public static final String ACTION_KEY_PROGRESS_CHANGED = "progressChanged";
+    public static final String ACTION_KEY_MEDIA_SESSION_CONTROL_TYPE = "mediaSessionControlType";
 
     private OnPlayListener onPlayListener;
     public void setOnPlayListener(OnPlayListener onPlayListener) {
@@ -83,7 +84,8 @@ public class MediaBroadcastReceiver extends BroadcastReceiver {
             onSequencePlayListener.onSequencePlay(iLikedMusicEntity);
         } else if (intent.getAction() == MediaBroadcastAction.ACTION_MEDIA_SESSION_CONTROL) {
             ILikedMusicEntity iLikedMusicEntity = intent.getParcelableExtra(ACTION_KEY_I_LIKED_MUSIC_ENTITY);
-            onMediaSessionControlListener.onMediaSessionControl(iLikedMusicEntity);
+            int mediaSessionControlType = intent.getIntExtra(ACTION_KEY_MEDIA_SESSION_CONTROL_TYPE, 0);
+            onMediaSessionControlListener.onMediaSessionControl(iLikedMusicEntity , mediaSessionControlType);
         } else if (intent.getAction() == MediaBroadcastAction.ACTION_MEDIA_SESSION_UPDATE) {
             int position = intent.getIntExtra(ACTION_KEY_PROGRESS_CHANGED, 0);
             onMediaSessionUpdateListener.onMediaSessionUpdate(position);

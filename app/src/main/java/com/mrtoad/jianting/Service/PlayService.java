@@ -28,6 +28,7 @@ import androidx.core.content.ContextCompat;
 import androidx.media.session.MediaButtonReceiver;
 
 import com.mrtoad.jianting.Activity.PlayActivity;
+import com.mrtoad.jianting.Constants.ControlTypeConstants;
 import com.mrtoad.jianting.Constants.MediaPlayModelConstants;
 import com.mrtoad.jianting.Constants.SPDataConstants;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
@@ -268,7 +269,7 @@ public class PlayService extends Service {
                 ILikedMusicEntity previousMusicEntity = MusicUtils.getNextOrPreviousMusic(PlayService.this, currentPlayEntity.getMusicName(), MusicUtils.PREVIOUS_MUSIC);
                 switchPlay(previousMusicEntity);
                 GlobalDataManager.getInstance().setPlaying(true);
-                onMediaSessionControlListener.onMediaSessionControl(previousMusicEntity);
+                onMediaSessionControlListener.onMediaSessionControl(previousMusicEntity , ControlTypeConstants.MEDIA_CONTROL_TYPE_PREVIOUS);
                 SPDataUtils.storageInformation(PlayService.this , SPDataConstants.LAST_PLAY , previousMusicEntity.getMusicName());
             }
 
@@ -277,7 +278,7 @@ public class PlayService extends Service {
                 super.onPlay();
                 play(currentPlayEntity);
                 GlobalDataManager.getInstance().setPlaying(true);
-                onMediaSessionControlListener.onMediaSessionControl(currentPlayEntity);
+                onMediaSessionControlListener.onMediaSessionControl(currentPlayEntity , ControlTypeConstants.MEDIA_CONTROL_TYPE_PLAY);
             }
 
             @Override
@@ -285,7 +286,7 @@ public class PlayService extends Service {
                 super.onPause();
                 pause();
                 GlobalDataManager.getInstance().setPlaying(false);
-                onMediaSessionControlListener.onMediaSessionControl(currentPlayEntity);
+                onMediaSessionControlListener.onMediaSessionControl(currentPlayEntity , ControlTypeConstants.MEDIA_CONTROL_TYPE_PAUSE);
             }
 
             @Override
@@ -294,7 +295,7 @@ public class PlayService extends Service {
                 ILikedMusicEntity nextMusicEntity = MusicUtils.getNextOrPreviousMusic(PlayService.this , currentPlayEntity.getMusicName() , MusicUtils.NEXT_MUSIC);
                 switchPlay(nextMusicEntity);
                 GlobalDataManager.getInstance().setPlaying(true);
-                onMediaSessionControlListener.onMediaSessionControl(nextMusicEntity);
+                onMediaSessionControlListener.onMediaSessionControl(nextMusicEntity , ControlTypeConstants.MEDIA_CONTROL_TYPE_NEXT);
                 SPDataUtils.storageInformation(PlayService.this , SPDataConstants.LAST_PLAY , nextMusicEntity.getMusicName());
             }
 

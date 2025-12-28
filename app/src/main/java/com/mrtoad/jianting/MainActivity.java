@@ -60,9 +60,9 @@ public class MainActivity extends AppCompatActivity {
                 MediaMethods.sequencePlay(MainActivity.this , iLikedMusicEntity);
             }));
 
-            playService.setOnMediaSessionControlListener((iLikedMusicEntity) -> {
+            playService.setOnMediaSessionControlListener((iLikedMusicEntity , controlType) -> {
                 StandardBroadcastMethods.updateBottomPlayerUi(MainActivity.this , iLikedMusicEntity);
-                MediaMethods.mediaSessionControl(MainActivity.this , iLikedMusicEntity);
+                MediaMethods.mediaSessionControl(MainActivity.this , iLikedMusicEntity , controlType);
             });
 
         }

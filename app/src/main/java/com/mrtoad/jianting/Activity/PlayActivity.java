@@ -15,6 +15,7 @@ import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.Broadcast.MediaMethods;
 import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
 import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
+import com.mrtoad.jianting.Constants.ControlTypeConstants;
 import com.mrtoad.jianting.Constants.LocalListConstants;
 import com.mrtoad.jianting.Constants.MapConstants;
 import com.mrtoad.jianting.Constants.MediaPlayModelConstants;
@@ -166,9 +167,19 @@ public class PlayActivity extends AppCompatActivity {
             updateData();
         });
 
-        mediaBroadcastReceiver.setOnMediaSessionControlListener((item) -> {
+        /**
+         * 监听媒体会话控制事件
+         */
+        mediaBroadcastReceiver.setOnMediaSessionControlListener((item , controlType) -> {
             iLikedMusicEntity = item;
-            updateData();
+            // 如果我在前台通知上点击暂停，那么我不用直接调用 updateData。只需要更新数据和停止播放器即可
+            if (controlType == ControlTypeConstants.MEDIA_CONTROL_TYPE_PAUSE) {
+                StandardBroadcastMethods.updateBottomPlayerUi(PlayActivity.this , iLikedMusicEntity);
+                setData();
+                cannelPlayerTimer();
+            } else {
+                updateData();
+            }
         });
 
         /**
@@ -189,7 +200,6 @@ public class PlayActivity extends AppCompatActivity {
         StandardBroadcastMethods.updateBottomPlayerUi(PlayActivity.this , iLikedMusicEntity);
         SPDataUtils.storageInformation(PlayActivity.this , SPDataConstants.LAST_PLAY , iLikedMusicEntity.getMusicName());
         // 更新当前 UI
-        GlobalMethodsUtils.setPlayButton(playButton);
         setData();
         // 重新开始计时
         cannelPlayerTimer();

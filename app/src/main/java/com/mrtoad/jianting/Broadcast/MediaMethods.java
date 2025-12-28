@@ -79,9 +79,10 @@ public class MediaMethods {
      * @param activity Activity
      * @param iLikedMusicEntity 音乐实体
      */
-    public static void mediaSessionControl(Activity activity , ILikedMusicEntity iLikedMusicEntity) {
+    public static void mediaSessionControl(Activity activity , ILikedMusicEntity iLikedMusicEntity , int controlType) {
         Intent mediaSessionControlIntent = new Intent(MediaBroadcastAction.ACTION_MEDIA_SESSION_CONTROL);
         mediaSessionControlIntent.putExtra(MediaBroadcastReceiver.ACTION_KEY_I_LIKED_MUSIC_ENTITY , iLikedMusicEntity);
+        mediaSessionControlIntent.putExtra(MediaBroadcastReceiver.ACTION_KEY_MEDIA_SESSION_CONTROL_TYPE , controlType);
         activity.sendBroadcast(mediaSessionControlIntent.setPackage(activity.getPackageName()));
     }
 
