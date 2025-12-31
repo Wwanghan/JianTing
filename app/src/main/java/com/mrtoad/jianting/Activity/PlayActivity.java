@@ -106,7 +106,6 @@ public class PlayActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
                 isTrackingTouch = false;
                 MediaMethods.setProgress(PlayActivity.this , seekBar.getProgress());
-                MediaMethods.mediaSessionUpdate(PlayActivity.this , seekBar.getProgress());
             }
         });
 

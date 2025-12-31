@@ -5,4 +5,5 @@ public class ControlTypeConstants {
     public static final int MEDIA_CONTROL_TYPE_PAUSE = 2;
     public static final int MEDIA_CONTROL_TYPE_NEXT = 3;
     public static final int MEDIA_CONTROL_TYPE_PREVIOUS = 4;
+    public static final int MEDIA_CONTROL_TYPE_SEEK_TO = 5;
 }

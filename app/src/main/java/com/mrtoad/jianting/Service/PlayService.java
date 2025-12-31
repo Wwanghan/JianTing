@@ -1,33 +1,16 @@
 package com.mrtoad.jianting.Service;
 
-import android.annotation.SuppressLint;
 import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.Binder;
-import android.os.Build;
 import android.os.IBinder;
-import android.os.SystemClock;
-import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
-import androidx.media.session.MediaButtonReceiver;
-
-import com.mrtoad.jianting.Activity.PlayActivity;
 import com.mrtoad.jianting.Constants.ControlTypeConstants;
 import com.mrtoad.jianting.Constants.MediaPlayModelConstants;
 import com.mrtoad.jianting.Constants.SPDataConstants;
@@ -36,7 +19,9 @@ import com.mrtoad.jianting.GlobalDataManager;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnFinishListener;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnSequencePlayListener;
 import com.mrtoad.jianting.Interface.MediaBroadcastInterface.OnMediaSessionControlListener;
-import com.mrtoad.jianting.R;
+import com.mrtoad.jianting.Interface.ServiceManagerInterface.OnMediaSessionManagerControlListener;
+import com.mrtoad.jianting.Service.Manager.MediaSessionManager;
+import com.mrtoad.jianting.Service.Manager.NotificationManager;
 import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
 import com.mrtoad.jianting.Utils.MusicUtils;
 import com.mrtoad.jianting.Utils.SPDataUtils;
@@ -44,30 +29,29 @@ import com.mrtoad.jianting.Utils.SPDataUtils;
 import java.io.IOException;
 import java.util.List;
 
-public class PlayService extends Service {
+public class PlayService extends Service implements OnMediaSessionManagerControlListener {
 
     private MediaPlayer player;
     private String currentFilePath;
     private boolean isPrepared = false;
-    private boolean isManualSwitch = false;
     private final IBinder myBinder = new MyBinder();
     public class MyBinder extends Binder {
         public PlayService getService() {
             return PlayService.this;
         }
     }
-    private MediaSessionCompat mediaSession;
-    private static final String MUSIC_PLAY_SESSION = "com.mrtoad.jianting.MUSIC_PLAY_SESSION";
-    private PlaybackStateCompat playbackState;
-    private NotificationManagerCompat notificationManager;
-    private static final String MUSIC_PLAY_SESSION_CHANNEL_ID = "com.mrtoad.jianting.MUSIC_PLAY_SESSION_CHANNEL";
-    private static final String MUSIC_PLAY_SESSION_CHANNEL_NAME = "音乐播放会话";
-    private static final String MUSIC_PLAY_SESSION_CHANNEL_DESCRIPTION = "音乐播放会话渠道";
-    private static final int MUSIC_PLAY_SESSION_NOTIFICATION_ID = 100;
-
     private ILikedMusicEntity currentPlayEntity;
     private List<String> musicList;
 
+    /**
+     * 服务管理类
+     */
+    private MediaSessionManager mediaSessionManager;
+    private com.mrtoad.jianting.Service.Manager.NotificationManager notificationManager;
+
+    /**
+     * 接口设置
+     */
     private OnFinishListener onFinishListener;
     public void setOnFinishListener(OnFinishListener onFinishListener) {
         this.onFinishListener = onFinishListener;
@@ -109,8 +93,10 @@ public class PlayService extends Service {
             int currentPlayModel = GlobalDataManager.getInstance().getCurrentPlayModel(this);
             // 根据不同的播放模式采取不同的播放策略
             if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_SEQUENCE) {
-                playNextMusic();
+                // 顺序播放
+                sequencePlay();
             } else if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_CYCLE) {
+                // 单曲循环
                 play(currentPlayEntity);
             }
             // 暂时不需要用到播完暂停。但是代码先保留
@@ -119,11 +105,14 @@ public class PlayService extends Service {
 //            }
         });
 
-        initMediaSession();
+        // 初始化媒体会话管理器
+        mediaSessionManager = new MediaSessionManager(this);
+        mediaSessionManager.init(this);
+        notificationManager = new NotificationManager(this);
 
         // 创建音乐播放会话渠道，如果已经创建，则不再创建
-        if (!chanelIsExist(this , MUSIC_PLAY_SESSION_CHANNEL_ID)) {
-            createSessionChannel();
+        if (!notificationManager.chanelIsExist(notificationManager.getChannelId())) {
+            notificationManager.createMediaSessionChannel();
         }
 
         // 判断之前是否播放过音乐
@@ -131,7 +120,9 @@ public class PlayService extends Service {
             String lastPlayMusicName = SPDataUtils.getStorageInformation(this, SPDataConstants.LAST_PLAY);
             currentPlayEntity = GlobalMethodsUtils.getMusicEntityByMusicName(this , lastPlayMusicName);
         }
-        updateNotificationAndMetadata();
+
+        // 设置初始播放状态停止（开始默认为停止状态，播放位置默认为0）
+        updateMediaSessionAndNotification(PlaybackStateCompat.STATE_STOPPED , 0);
     }
 
     /**
@@ -143,8 +134,7 @@ public class PlayService extends Service {
         if (player != null && iLikedMusicEntity.getMusicFilePath().equals(currentFilePath) && isPrepared) {
             if (!player.isPlaying()) {
                 player.start();
-                updateNotificationAndMetadata();
-                setPlaybackState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition());
+                updateMediaSessionAndNotification(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition());
             }
             return;
         }
@@ -162,34 +152,11 @@ public class PlayService extends Service {
             GlobalDataManager.getInstance().setPlayer(player);
             currentPlayEntity = iLikedMusicEntity;
 
-            updateNotificationAndMetadata();
-            setPlaybackState(PlaybackStateCompat.STATE_PLAYING , 0);
+            updateMediaSessionAndNotification(PlaybackStateCompat.STATE_PLAYING , 0);
 
         } catch (IOException e) {
             Log.d("@@@" , "播放失败 : " + e.getMessage());
         }
-    }
-
-    /**
-     * 播放下一首歌曲（主要用于顺序播放）
-     */
-    public void playNextMusic() {
-        ILikedMusicEntity nextMusicEntity = MusicUtils.getNextOrPreviousMusic(this, currentPlayEntity.getMusicName(), MusicUtils.NEXT_MUSIC);
-        play(nextMusicEntity);
-        SPDataUtils.storageInformation(this , SPDataConstants.LAST_PLAY , nextMusicEntity.getMusicName());
-        onSequencePlayListener.onSequencePlay(nextMusicEntity);
-
-        setPlaybackState(PlaybackStateCompat.STATE_PLAYING , 0);
-        updateNotificationAndMetadata();
-    }
-
-    /**
-     * 切换播放音乐
-     * @param iLikedMusicEntity 音乐实体
-     */
-    public void switchPlay(ILikedMusicEntity iLikedMusicEntity) {
-        isManualSwitch = true;
-        play(iLikedMusicEntity);
     }
 
     /**
@@ -198,10 +165,16 @@ public class PlayService extends Service {
     public void pause() {
         if (player != null) {
             player.pause();
-
-            setPlaybackState(PlaybackStateCompat.STATE_PAUSED, player.getCurrentPosition());
-            updateNotificationAndMetadata();
+            updateMediaSessionAndNotification(PlaybackStateCompat.STATE_PAUSED, player.getCurrentPosition());
         }
+    }
+
+    /**
+     * 切换播放音乐（用于上、下首歌曲切换播放）
+     * @param iLikedMusicEntity 音乐实体
+     */
+    public void switchPlay(ILikedMusicEntity iLikedMusicEntity) {
+        play(iLikedMusicEntity);
     }
 
     /**
@@ -211,16 +184,19 @@ public class PlayService extends Service {
     public void setProgress(int progress) {
         if (player != null) {
             player.seekTo(progress);
+            updateMediaSessionAndNotification(PlaybackStateCompat.STATE_PLAYING , progress);
         }
     }
 
     /**
-     * 更新媒体会话状态
-     * @param position 播放进度
+     * 顺序播放，播放下一首歌曲
      */
-    public void updateMediaSession(int position) {
-        setPlaybackState(PlaybackStateCompat.STATE_PLAYING , position);
-        updateNotificationAndMetadata();
+    public void sequencePlay() {
+        ILikedMusicEntity nextMusicEntity = MusicUtils.getNextOrPreviousMusic(this, currentPlayEntity.getMusicName(), MusicUtils.NEXT_MUSIC);
+        play(nextMusicEntity);
+
+        SPDataUtils.storageInformation(this , SPDataConstants.LAST_PLAY , nextMusicEntity.getMusicName());
+        onSequencePlayListener.onSequencePlay(nextMusicEntity);
     }
 
     /**
@@ -241,246 +217,62 @@ public class PlayService extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
+        // 释放 MediaPlayer
         if (player != null) {
             player.release();
             player = null;
         }
         resetPlayer();
-
-        if (mediaSession != null) {
-            mediaSession.setActive(false);
-            mediaSession.release();
-            mediaSession = null;
-        }
-
+        // 释放媒体会话
+        mediaSessionManager.release();
+        // 停止前台服务并取消通知
         stopForeground(STOP_FOREGROUND_REMOVE);
-        notificationManager.cancel(MUSIC_PLAY_SESSION_NOTIFICATION_ID);
+        notificationManager.cannel();
         return super.onUnbind(intent);
     }
 
-    private void initMediaSession() {
-        // 创建 MediaSessionCompat 实例
-        mediaSession = new MediaSessionCompat(this , MUSIC_PLAY_SESSION);
-        // 设置会话回调，用于接收播放控制指令
-        mediaSession.setCallback(new MediaSessionCompat.Callback() {
-            @Override
-            public void onSkipToPrevious() {
-                super.onSkipToPrevious();
-                ILikedMusicEntity previousMusicEntity = MusicUtils.getNextOrPreviousMusic(PlayService.this, currentPlayEntity.getMusicName(), MusicUtils.PREVIOUS_MUSIC);
-                switchPlay(previousMusicEntity);
-                GlobalDataManager.getInstance().setPlaying(true);
-                onMediaSessionControlListener.onMediaSessionControl(previousMusicEntity , ControlTypeConstants.MEDIA_CONTROL_TYPE_PREVIOUS);
-                SPDataUtils.storageInformation(PlayService.this , SPDataConstants.LAST_PLAY , previousMusicEntity.getMusicName());
-            }
-
-            @Override
-            public void onPlay() {
-                super.onPlay();
-                play(currentPlayEntity);
-                GlobalDataManager.getInstance().setPlaying(true);
-                onMediaSessionControlListener.onMediaSessionControl(currentPlayEntity , ControlTypeConstants.MEDIA_CONTROL_TYPE_PLAY);
-            }
-
-            @Override
-            public void onPause() {
-                super.onPause();
-                pause();
-                GlobalDataManager.getInstance().setPlaying(false);
-                onMediaSessionControlListener.onMediaSessionControl(currentPlayEntity , ControlTypeConstants.MEDIA_CONTROL_TYPE_PAUSE);
-            }
-
-            @Override
-            public void onSkipToNext() {
-                super.onSkipToNext();
-                ILikedMusicEntity nextMusicEntity = MusicUtils.getNextOrPreviousMusic(PlayService.this , currentPlayEntity.getMusicName() , MusicUtils.NEXT_MUSIC);
-                switchPlay(nextMusicEntity);
-                GlobalDataManager.getInstance().setPlaying(true);
-                onMediaSessionControlListener.onMediaSessionControl(nextMusicEntity , ControlTypeConstants.MEDIA_CONTROL_TYPE_NEXT);
-                SPDataUtils.storageInformation(PlayService.this , SPDataConstants.LAST_PLAY , nextMusicEntity.getMusicName());
-            }
-
-            @Override
-            public void onSeekTo(long pos) {
-                super.onSeekTo(pos);
-                setProgress((int) pos);
-                setPlaybackState(PlaybackStateCompat.STATE_PLAYING , pos);
-            }
-            
-        });
-        // 设置初始播放状态停止
-        setPlaybackState(PlaybackStateCompat.STATE_STOPPED , 0);
-        // 设置会话可接收媒体按钮事件（比如蓝牙设备的播放按钮）
-        mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
-        // 激活 MediaSession，必须激活，否则无法接收指令
-        mediaSession.setActive(true);
+    /**
+     * 媒体会话控制接口
+     * @param controlType 控制类型
+     */
+    @Override
+    public void onMediaSessionManagerControl(int controlType) {
+            // 播放控制：播放
+        if (controlType == ControlTypeConstants.MEDIA_CONTROL_TYPE_PLAY) {
+            play(currentPlayEntity);
+            onMediaSessionControlListener.onMediaSessionControl(currentPlayEntity , ControlTypeConstants.MEDIA_CONTROL_TYPE_PLAY);
+            // 播放控制：暂停
+        } else if (controlType == ControlTypeConstants.MEDIA_CONTROL_TYPE_PAUSE) {
+            pause();
+            onMediaSessionControlListener.onMediaSessionControl(currentPlayEntity , ControlTypeConstants.MEDIA_CONTROL_TYPE_PAUSE);
+            // 播放控制：上一曲
+        } else if (controlType == ControlTypeConstants.MEDIA_CONTROL_TYPE_PREVIOUS) {
+            ILikedMusicEntity previousMusicEntity = MusicUtils.getNextOrPreviousMusic(PlayService.this, currentPlayEntity.getMusicName(), MusicUtils.PREVIOUS_MUSIC);
+            switchPlay(previousMusicEntity);
+            SPDataUtils.storageInformation(this , SPDataConstants.LAST_PLAY , currentPlayEntity.getMusicName());
+            onMediaSessionControlListener.onMediaSessionControl(previousMusicEntity , ControlTypeConstants.MEDIA_CONTROL_TYPE_PREVIOUS);
+            // 播放控制：下一曲
+        } else if (controlType == ControlTypeConstants.MEDIA_CONTROL_TYPE_NEXT) {
+            ILikedMusicEntity nextMusicEntity = MusicUtils.getNextOrPreviousMusic(PlayService.this , currentPlayEntity.getMusicName() , MusicUtils.NEXT_MUSIC);
+            switchPlay(nextMusicEntity);
+            SPDataUtils.storageInformation(this , SPDataConstants.LAST_PLAY , currentPlayEntity.getMusicName());
+            onMediaSessionControlListener.onMediaSessionControl(nextMusicEntity , ControlTypeConstants.MEDIA_CONTROL_TYPE_NEXT);
+            // 播放控制：进度条控制
+        } else if (controlType == ControlTypeConstants.MEDIA_CONTROL_TYPE_SEEK_TO) {
+            setProgress((int) mediaSessionManager.getMediaPlayPosition());
+        }
     }
 
     /**
-     * 设置播放状态
-     * @param state 播放状态
-     * @param position 当前播放位置
+     * 更新音乐会话 和 MediaSession 元数据
      */
-    private void setPlaybackState(int state , long position) {
-        playbackState = new PlaybackStateCompat.Builder()
-                .setActions(
-                        PlaybackStateCompat.ACTION_PLAY |
-                                PlaybackStateCompat.ACTION_PAUSE |
-                                PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
-                                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
-                                PlaybackStateCompat.ACTION_STOP |
-                                PlaybackStateCompat.ACTION_SEEK_TO
-                )
-                .setState(state , position , 1.0f , SystemClock.elapsedRealtime())
-                .build();
-        mediaSession.setPlaybackState(playbackState);
-    }
-
-    /**
-     * 更新音乐播放通知 和 MediaSession 元数据
-     */
-    private void updateNotificationAndMetadata() {
+    private void updateMediaSessionAndNotification(int state , long position) {
         if (currentPlayEntity != null) {
-            showMediaNotification();
-            setMediaMetadata();
+            // 更新通知
+            Notification notification = notificationManager.buildMediaNotification(currentPlayEntity , player.isPlaying() , mediaSessionManager.getMediaSessionToken());
+            startForeground(notificationManager.getNotificationId() , notification , ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+            // 更新 MediaSession 元数据
+            mediaSessionManager.updateMediaSession(currentPlayEntity , state , position);
         }
     }
-
-    /**
-     * 设置媒体元数据
-     */
-    private void setMediaMetadata() {
-        MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE , currentPlayEntity.getMusicName())
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST , currentPlayEntity.getMusicAuthor())
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION , Long.parseLong(currentPlayEntity.getDuration()))
-                .build();
-        mediaSession.setMetadata(metadata);
-    }
-
-    /**
-     * 创建音乐播放会话渠道
-     */
-    private void createSessionChannel() {
-        notificationManager = NotificationManagerCompat.from(this);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    MUSIC_PLAY_SESSION_CHANNEL_ID,
-                    MUSIC_PLAY_SESSION_CHANNEL_NAME,
-                    NotificationManager.IMPORTANCE_LOW
-            );
-            channel.setDescription(MUSIC_PLAY_SESSION_CHANNEL_DESCRIPTION);
-            notificationManager.createNotificationChannel(channel);
-        }
-    }
-
-    /**
-     * 判断音乐播放会话渠道是否存在
-     * @param channelId 渠道ID
-     * @return 渠道是否存在 boolean
-     */
-    private boolean chanelIsExist(Context context , String channelId) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return ContextCompat.getSystemService(context , NotificationManager.class).getNotificationChannel(channelId) != null;
-        }
-        return false;
-    }
-
-    /**
-     * 显示音乐播放通知
-     */
-    @SuppressLint("ForegroundServiceType")
-    private void showMediaNotification() {
-        if (mediaSession == null) {
-            return;
-        }
-
-        Notification notification = buildMediaNotification();
-        startForeground(MUSIC_PLAY_SESSION_NOTIFICATION_ID , notification , ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
-    }
-
-    /**
-     * 构建音乐播放通知
-     * @return 通知对象
-     */
-    private Notification buildMediaNotification() {
-        // 判断当前播放状态，设置对应按钮（播放/暂停切换）
-        String playPauseText;
-        int playPauseAction;
-        if (player != null && player.isPlaying()) {
-            playPauseText = "暂停";
-            playPauseAction = Math.toIntExact(PlaybackStateCompat.ACTION_PAUSE); // 当前播放中，按钮触发暂停
-        } else {
-            playPauseText = "播放";
-            playPauseAction = Math.toIntExact(PlaybackStateCompat.ACTION_PLAY); // 当前暂停，按钮触发播放
-        }
-
-        // 创建跳转到 PlayActivity 的 Intent/ 创建跳转到 PlayActivity 的 Intent
-        Intent playIntent = new Intent(this , PlayActivity.class);
-        playIntent.putExtra(PlayActivity.ACTION_KEY_I_LIKED_MUSIC_ENTITY, currentPlayEntity);
-        playIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
-        // 使用 PendingIntent.getActivity() 的第四个参数设置 FLAG_UPDATE_CURRENT
-        // 确保每次更新时都能获取到最新的实体
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                this,
-                0,  // 自定义请求码，确保唯一性
-                playIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-
-        // 构建通知
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this , MUSIC_PLAY_SESSION_CHANNEL_ID)
-                .setContentTitle(currentPlayEntity.getMusicName())
-                .setContentText(currentPlayEntity.getMusicAuthor())
-                .setContentIntent(pendingIntent)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setAutoCancel(false)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
-
-        /**
-         * 设置当前音乐封面，两种情况
-         * 如果当前音乐有封面，则使用封面当大图标和应用图表当小图标
-         * 如果当前音乐没有封面，则使用默认图标当大图标和小图标
-         */
-        String filePath = currentPlayEntity.getMusicCover();
-        if (filePath != null && !filePath.isEmpty()) {
-            Bitmap bitmap = BitmapFactory.decodeFile(filePath);
-            if (bitmap != null) {
-                // 缩放图片到合适大小（大图标推荐 64x64 dp 或 128x128 像素）
-                Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, 128, 128, true);
-                builder.setLargeIcon(scaledBitmap);
-                builder.setSmallIcon(R.mipmap.app_icon);
-            }
-        } else {
-            builder.setSmallIcon(R.drawable.music_cover_default);
-        }
-
-        builder.addAction(
-                R.drawable.previous_music,
-                "上一首",
-                MediaButtonReceiver.buildMediaButtonPendingIntent(this , PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
-        );
-
-        builder.addAction(
-                playPauseAction,
-                playPauseText,
-                MediaButtonReceiver.buildMediaButtonPendingIntent(this , playPauseAction)
-        );
-
-        builder.addAction(
-                R.drawable.next_music,
-                "下一首",
-                MediaButtonReceiver.buildMediaButtonPendingIntent(this , PlaybackStateCompat.ACTION_SKIP_TO_NEXT)
-        );
-        // 关键。设置MediaStyle，绑定MediaSession，实现通知与MediaSession联动
-        builder.setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                .setMediaSession(mediaSession.getSessionToken())
-                .setShowActionsInCompactView(0, 1, 2)
-                .setShowCancelButton(true)
-                .setCancelButtonIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this , PlaybackStateCompat.ACTION_STOP))
-        );
-
-        return builder.build();
-    }
-
 }

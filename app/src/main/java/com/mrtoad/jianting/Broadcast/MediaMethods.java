@@ -85,14 +85,4 @@ public class MediaMethods {
         mediaSessionControlIntent.putExtra(MediaBroadcastReceiver.ACTION_KEY_MEDIA_SESSION_CONTROL_TYPE , controlType);
         activity.sendBroadcast(mediaSessionControlIntent.setPackage(activity.getPackageName()));
     }
-
-    /**
-     * 发送一条媒体会话更新广播
-     * @param activity Activity
-     */
-    public static void mediaSessionUpdate(Activity activity , int position) {
-        Intent mediaSessionUpdateIntent = new Intent(MediaBroadcastAction.ACTION_MEDIA_SESSION_UPDATE);
-        mediaSessionUpdateIntent.putExtra(MediaBroadcastReceiver.ACTION_KEY_PROGRESS_CHANGED , position);
-        activity.sendBroadcast(mediaSessionUpdateIntent.setPackage(activity.getPackageName()));
-    }
 }
