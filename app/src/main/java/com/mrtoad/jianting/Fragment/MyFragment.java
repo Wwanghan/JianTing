@@ -1,17 +1,13 @@
 package com.mrtoad.jianting.Fragment;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,13 +17,11 @@ import android.widget.LinearLayout;
 import com.bumptech.glide.Glide;
 import com.kongzue.dialogx.dialogs.WaitDialog;
 import com.mrtoad.jianting.Activity.ILikedMusicActivity;
-import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.Constants.DialogConstants;
 import com.mrtoad.jianting.Constants.SPDataConstants;
 import com.mrtoad.jianting.R;
 import com.mrtoad.jianting.Utils.MusicUtils;
 import com.mrtoad.jianting.Utils.SPDataUtils;
-import com.mrtoad.jianting.Utils.ToastUtils;
 
 
 public class MyFragment extends Fragment {
@@ -35,7 +29,7 @@ public class MyFragment extends Fragment {
     private LinearLayout importMusicArea;
     private LinearLayout ILikedMusicArea;
     private ActivityResultLauncher<String> imagePickerLauncher;
-    private ActivityResultLauncher<String> filePickerLauncher;
+    private ActivityResultLauncher<String[]> multipleFilePickerLauncher;
 
 
     @Override
@@ -76,7 +70,7 @@ public class MyFragment extends Fragment {
          * 导入音乐
          */
         importMusicArea.setOnClickListener((v) -> {
-            filePickerLauncher.launch("audio/*");
+            multipleFilePickerLauncher.launch(new String[]{"audio/*"});
         });
 
         return view;
@@ -94,12 +88,12 @@ public class MyFragment extends Fragment {
             }
         });
 
-        filePickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent() , (uri) -> {
-            if (uri != null) {
+        multipleFilePickerLauncher = registerForActivityResult(new ActivityResultContracts.OpenMultipleDocuments() , (uris) -> {
+            if (uris != null && !uris.isEmpty()) {
                 WaitDialog.show(DialogConstants.WAIT_DIALOG_IMPORT_MUSIC);
                 // 保存音乐
                 new Thread(() -> {
-                    MusicUtils.saveMusic(getContext() , uri);
+                    MusicUtils.saveMusic(getContext() , uris);
                 }).start();
             }
         });

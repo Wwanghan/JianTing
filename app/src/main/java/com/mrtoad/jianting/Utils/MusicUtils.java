@@ -36,26 +36,23 @@ public class MusicUtils {
     public static final String NEXT_MUSIC = "next_music";
     public static final String PREVIOUS_MUSIC = "previous_music";
 
-    /**
-     * 保存音乐，其中包含两部分
-     * 1. 保存音乐文件
-     * 2. 保存音乐信息
-     * @param context context
-     * @param uri uri
-     */
-    public static void saveMusic(Context context, Uri uri) {
-        // 保存音乐文件
-        File file = saveMusicFile(context, uri);
-
-        // 保存音乐信息
-        if (file != null) {
-            saveMusicInfo(context , file);
+        /**
+         * 保存音乐，其中包含两部分
+         * 1. 保存音乐文件
+         * 2. 保存音乐信息
+         * @param context context
+         * @param uris uri 列表
+         */
+        public static void saveMusic(Context context, List<Uri> uris) {
+            for (Uri uri : uris) {
+                // 保存音乐文件
+                File file = saveMusicFile(context, uri);
+                if (file != null) {
+                    // 保存音乐信息
+                    saveMusicInfo(context , file);
+                }
+            }
             TipDialog.show(DialogConstants.TIP_DIALOG_IMPORT_MUSIC_SUCCESS , WaitDialog.TYPE.SUCCESS);
-        } else {
-            // 返回 null，说明文件已经存在
-            TipDialog.show(DialogConstants.TIP_DIALOG_IMPORT_MUSIC_EXIST , WaitDialog.TYPE.WARNING);
-        }
-
     }
 
     @SuppressLint("ResourceType")
