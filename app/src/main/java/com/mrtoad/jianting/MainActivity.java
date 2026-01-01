@@ -8,16 +8,13 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.kongzue.dialogx.DialogX;
 import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.Broadcast.Action.StandardBroadcastAction;
@@ -26,14 +23,10 @@ import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
 import com.mrtoad.jianting.Broadcast.Receiver.StandardBroadcastReceiver;
 import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
 import com.mrtoad.jianting.Fragment.BottomPlayerFragment;
-import com.mrtoad.jianting.Fragment.FrontPageFragment;
-import com.mrtoad.jianting.Fragment.MyFragment;
-import com.mrtoad.jianting.Interface.OnBottomPlayerReadyListener;
+import com.mrtoad.jianting.Fragment.MainFragment;
 import com.mrtoad.jianting.Service.PlayService;
 import com.mrtoad.jianting.Utils.FragmentUtils;
 import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
-import com.mrtoad.jianting.Utils.SPDataUtils;
-import com.mrtoad.jianting.Utils.ToastUtils;
 
 public class MainActivity extends AppCompatActivity {
     private FragmentManager fragmentManager;
@@ -60,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
                 MediaMethods.sequencePlay(MainActivity.this , iLikedMusicEntity);
             }));
 
+            // 监听媒体会话控制时间（播放、暂停、上、下首歌曲）
             playService.setOnMediaSessionControlListener((iLikedMusicEntity , controlType) -> {
                 StandardBroadcastMethods.updateBottomPlayerUi(MainActivity.this , iLikedMusicEntity);
                 MediaMethods.mediaSessionControl(MainActivity.this , iLikedMusicEntity , controlType);
@@ -92,28 +86,15 @@ public class MainActivity extends AppCompatActivity {
         // 初始化 DialogX，方便后续使用
         DialogX.init(this);
 
-        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
-
         /**
          * 加载底部导航栏 和 底部播放器
          */
         fragmentManager = getSupportFragmentManager();
         // 设置默认的 Fragment
-        FragmentUtils.loadFragment(fragmentManager , R.id.fragment_container , new FrontPageFragment());
-
-        bottomNavigationView.setOnItemSelectedListener((item) -> {
-            Fragment fragment = null;
-            if (item.getItemId() == R.id.nav_front_page) {
-                fragment = new FrontPageFragment();
-            } else if (item.getItemId() == R.id.nav_my) {
-                fragment = new MyFragment();
-            }
-            return FragmentUtils.loadFragment(fragmentManager , R.id.fragment_container , fragment);
-        });
-
+        FragmentUtils.loadFragment(fragmentManager , R.id.fragment_container , new MainFragment());
+        // 设置底部音乐播放导航
         bottomPlayerFragment = BottomPlayerFragment.newInstance();
         FragmentUtils.loadFragment(fragmentManager , R.id.bottom_player_fragment , bottomPlayerFragment);
-
         // 当底部播放器准备好时，设置底部播放器
         bottomPlayerFragment.setOnBottomPlayerReadyListener(() -> {
             GlobalMethodsUtils.setBottmPlayerFragment(MainActivity.this , fragmentManager , bottomPlayerFragment);

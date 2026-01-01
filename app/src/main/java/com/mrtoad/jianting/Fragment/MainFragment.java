@@ -24,7 +24,7 @@ import com.mrtoad.jianting.Utils.MusicUtils;
 import com.mrtoad.jianting.Utils.SPDataUtils;
 
 
-public class MyFragment extends Fragment {
+public class MainFragment extends Fragment {
     private ImageView avatarImage;
     private LinearLayout importMusicArea;
     private LinearLayout ILikedMusicArea;
@@ -34,7 +34,7 @@ public class MyFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater , ViewGroup container , Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_my, container, false);
+        View view = inflater.inflate(R.layout.fragment_main, container, false);
 
         avatarImage = view.findViewById(R.id.avatar_image);
         importMusicArea = view.findViewById(R.id.import_music_area);
