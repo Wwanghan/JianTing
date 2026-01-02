@@ -15,5 +15,5 @@
     <color name="background_card">#191919</color>
     <color name="background_card_click">#242424</color>
     <color name="text_color">#f3f3f3</color>
-    <color name="text_gray">#95969f</color>
+    <color name="text_gray">#4de9e9e9</color>
 </resources>

@@ -39,6 +39,7 @@ import com.mrtoad.jianting.Constants.LocalListConstants;
 import com.mrtoad.jianting.Constants.MapConstants;
 import com.mrtoad.jianting.Constants.MusicInfoConstants;
 import com.mrtoad.jianting.Constants.SPDataConstants;
+import com.mrtoad.jianting.Constants.ViewAnimationConstants;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
 import com.mrtoad.jianting.Fragment.BottomPlayerFragment;
 import com.mrtoad.jianting.GlobalDataManager;
@@ -48,6 +49,7 @@ import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
 import com.mrtoad.jianting.Utils.KMeansColorExtractor;
 import com.mrtoad.jianting.Utils.SPDataUtils;
 import com.mrtoad.jianting.Utils.ToastUtils;
+import com.mrtoad.jianting.Utils.ViewAnimationUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -136,6 +138,7 @@ public class ILikedMusicActivity extends AppCompatActivity {
          * 点击上方播放按钮，播放当前类表第一首歌曲
          */
         playButton.setOnClickListener((v) -> {
+            ViewAnimationUtils.waterRipplesAnimation(playButton , ViewAnimationConstants.WATER_RIPPLES_DURATION);
             MediaMethods.playMusic(this , iLIkedMusicList.get(0));
             updateUiAndData(iLIkedMusicList.get(0));
         });

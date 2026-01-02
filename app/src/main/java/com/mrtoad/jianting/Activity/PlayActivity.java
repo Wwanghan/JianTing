@@ -21,6 +21,7 @@ import com.mrtoad.jianting.Constants.MapConstants;
 import com.mrtoad.jianting.Constants.MediaPlayModelConstants;
 import com.mrtoad.jianting.Constants.MusicInfoConstants;
 import com.mrtoad.jianting.Constants.SPDataConstants;
+import com.mrtoad.jianting.Constants.ViewAnimationConstants;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
 import com.mrtoad.jianting.GlobalDataManager;
 import com.mrtoad.jianting.R;
@@ -31,6 +32,7 @@ import com.mrtoad.jianting.Utils.MusicUtils;
 import com.mrtoad.jianting.Utils.SPDataUtils;
 import com.mrtoad.jianting.Utils.TimeUtils;
 import com.mrtoad.jianting.Utils.ToastUtils;
+import com.mrtoad.jianting.Utils.ViewAnimationUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -117,6 +119,7 @@ public class PlayActivity extends AppCompatActivity {
          * 设置播放按钮点击事件
          */
         playButton.setOnClickListener((v) -> {
+            ViewAnimationUtils.waterRipplesAnimation(playButton , ViewAnimationConstants.WATER_RIPPLES_DURATION);
             if (GlobalDataManager.getInstance().isPlaying()) {
                 GlobalDataManager.getInstance().setPlaying(false);
                 MediaMethods.pauseMusic(PlayActivity.this);
@@ -142,6 +145,8 @@ public class PlayActivity extends AppCompatActivity {
          * 切换上一首歌曲
          */
         previousMusic.setOnClickListener((v) -> {
+            ViewAnimationUtils.waterRipplesAnimation(previousMusic , ViewAnimationConstants.WATER_RIPPLES_DURATION);
+
             ILikedMusicEntity previousMusicEntity = MusicUtils.getNextOrPreviousMusic(this, iLikedMusicEntity.getMusicName(), MusicUtils.PREVIOUS_MUSIC);
             MediaMethods.switchPlay(this , previousMusicEntity);
             iLikedMusicEntity = previousMusicEntity;
@@ -152,6 +157,8 @@ public class PlayActivity extends AppCompatActivity {
          * 切换下一首歌曲
          */
         nextMusic.setOnClickListener((v) -> {
+            ViewAnimationUtils.waterRipplesAnimation(nextMusic , ViewAnimationConstants.WATER_RIPPLES_DURATION);
+
             ILikedMusicEntity nextMusicEntity = MusicUtils.getNextOrPreviousMusic(this, iLikedMusicEntity.getMusicName(), MusicUtils.NEXT_MUSIC);
             MediaMethods.switchPlay(this , nextMusicEntity);
             iLikedMusicEntity = nextMusicEntity;
@@ -186,6 +193,8 @@ public class PlayActivity extends AppCompatActivity {
          */
         updatePlayModel();
         playModelIcon.setOnClickListener((v) -> {
+            ViewAnimationUtils.waterRipplesAnimation(playModelIcon , ViewAnimationConstants.WATER_RIPPLES_DURATION);
+
             changePlayModel();
         });
     }
