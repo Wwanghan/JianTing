@@ -3,6 +3,7 @@ package com.mrtoad.jianting.Activity;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -145,24 +146,14 @@ public class PlayActivity extends AppCompatActivity {
          * 切换上一首歌曲
          */
         previousMusic.setOnClickListener((v) -> {
-            ViewAnimationUtils.waterRipplesAnimation(previousMusic , ViewAnimationConstants.WATER_RIPPLES_DURATION);
-
-            ILikedMusicEntity previousMusicEntity = MusicUtils.getNextOrPreviousMusic(this, iLikedMusicEntity.getMusicName(), MusicUtils.PREVIOUS_MUSIC);
-            MediaMethods.switchPlay(this , previousMusicEntity);
-            iLikedMusicEntity = previousMusicEntity;
-            updateData();
+            switchPlay(MusicUtils.PREVIOUS_MUSIC);
         });
 
         /**
          * 切换下一首歌曲
          */
         nextMusic.setOnClickListener((v) -> {
-            ViewAnimationUtils.waterRipplesAnimation(nextMusic , ViewAnimationConstants.WATER_RIPPLES_DURATION);
-
-            ILikedMusicEntity nextMusicEntity = MusicUtils.getNextOrPreviousMusic(this, iLikedMusicEntity.getMusicName(), MusicUtils.NEXT_MUSIC);
-            MediaMethods.switchPlay(this , nextMusicEntity);
-            iLikedMusicEntity = nextMusicEntity;
-            updateData();
+            switchPlay(MusicUtils.NEXT_MUSIC);
         });
 
         /**
@@ -194,9 +185,31 @@ public class PlayActivity extends AppCompatActivity {
         updatePlayModel();
         playModelIcon.setOnClickListener((v) -> {
             ViewAnimationUtils.waterRipplesAnimation(playModelIcon , ViewAnimationConstants.WATER_RIPPLES_DURATION);
-
             changePlayModel();
         });
+    }
+
+    /**
+     * 切换播放（上一首、下一首）
+     * @param direction
+     */
+    private void switchPlay(String direction) {
+        ViewAnimationUtils.waterRipplesAnimation(
+                direction == MusicUtils.NEXT_MUSIC ? nextMusic : previousMusic,
+                ViewAnimationConstants.WATER_RIPPLES_DURATION
+        );
+
+        // 先让封面淡出
+        ViewAnimationUtils.fadeOutAnimation(musicCover , ViewAnimationConstants.FADE_OUT_DURATION , () -> {
+            // 获取下一首要播放的歌曲实体类
+            ILikedMusicEntity nextMusicEntity = MusicUtils.getNextOrPreviousMusic(this, iLikedMusicEntity.getMusicName(), direction);
+            MediaMethods.switchPlay(this , nextMusicEntity);
+            // 更新数据
+            iLikedMusicEntity = nextMusicEntity;
+            updateData();
+        });
+
+
     }
 
     /**
@@ -208,18 +221,18 @@ public class PlayActivity extends AppCompatActivity {
         StandardBroadcastMethods.updateBottomPlayerUi(PlayActivity.this , iLikedMusicEntity);
         SPDataUtils.storageInformation(PlayActivity.this , SPDataConstants.LAST_PLAY , iLikedMusicEntity.getMusicName());
         // 更新当前 UI
-        setData();
-        // 重新开始计时
-        cannelPlayerTimer();
         startPlayerTimer();
+        setData();
     }
 
     /**
      * 启动音乐播放计时器
      */
     private void startPlayerTimer() {
-        if (timer == null) { timer = new Timer(); }
+        // 确保取消之前的定时器
+        cannelPlayerTimer();
 
+        timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -245,9 +258,14 @@ public class PlayActivity extends AppCompatActivity {
      */
     private void  cannelPlayerTimer() {
         if (timer != null) {
-            timer.cancel();
-            timer.purge();
-            timer = null;
+            try {
+                timer.cancel();
+                timer.purge();
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                timer = null;
+            }
         }
     }
 
@@ -280,7 +298,10 @@ public class PlayActivity extends AppCompatActivity {
             }
         }
 
+        ViewAnimationUtils.fadeInAnimation(musicCover , ViewAnimationConstants.FADE_IN_DURATION);
         GlobalMethodsUtils.setMusicCover(PlayActivity.this , musicCover , iLikedMusicEntity.getMusicCover());
+
+
         musicName.setText(iLikedMusicEntity.getMusicName());
         musicAuthor.setText(iLikedMusicEntity.getMusicAuthor());
         playButton.setImageResource(R.drawable.play_button);
@@ -327,6 +348,13 @@ public class PlayActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        // 取消定时器
+        cannelPlayerTimer();
+        // 清理可能存在的引用
+        if (musicCover != null) {
+            musicCover.setImageDrawable(null);
+        }
 
         unregisterReceiver(mediaBroadcastReceiver);
     }
