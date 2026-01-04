@@ -160,8 +160,10 @@ public class PlayActivity extends AppCompatActivity {
          * 监听顺序播放事件
          */
         mediaBroadcastReceiver.setOnSequencePlayListener((item) -> {
-            iLikedMusicEntity = item;
-            updateData();
+            ViewAnimationUtils.fadeOutAnimation(musicCover , ViewAnimationConstants.FADE_OUT_DURATION , () -> {
+                iLikedMusicEntity = item;
+                updateData();
+            });
         });
 
         /**
@@ -208,8 +210,6 @@ public class PlayActivity extends AppCompatActivity {
             iLikedMusicEntity = nextMusicEntity;
             updateData();
         });
-
-
     }
 
     /**
