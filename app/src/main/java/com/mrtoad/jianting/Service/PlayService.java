@@ -26,7 +26,6 @@ import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
 import com.mrtoad.jianting.Utils.MusicUtils;
 import com.mrtoad.jianting.Utils.SPDataUtils;
 
-import java.io.IOException;
 import java.util.List;
 
 public class PlayService extends Service implements OnMediaSessionManagerControlListener {
@@ -41,6 +40,7 @@ public class PlayService extends Service implements OnMediaSessionManagerControl
         }
     }
     private ILikedMusicEntity currentPlayEntity;
+    private String lastPlayPositionInfo;
     private List<String> musicList;
 
     /**
@@ -121,8 +121,16 @@ public class PlayService extends Service implements OnMediaSessionManagerControl
             currentPlayEntity = GlobalMethodsUtils.getMusicEntityByMusicName(this , lastPlayMusicName);
         }
 
-        // 设置初始播放状态停止（开始默认为停止状态，播放位置默认为0）
-        updateMediaSessionAndNotification(PlaybackStateCompat.STATE_STOPPED , 0);
+        // 获取上次音乐播放位置
+        lastPlayPositionInfo = SPDataUtils.getStorageInformation(this , SPDataConstants.LAST_PLAY_POSITION);
+        if (lastPlayPositionInfo != null) {
+            setAndPreparePlayer(currentPlayEntity.getMusicFilePath());
+            setPlayData(currentPlayEntity);
+            setProgress(Integer.parseInt(lastPlayPositionInfo.split("_")[1]));
+
+            updateMediaSessionAndNotification(PlaybackStateCompat.STATE_STOPPED , player.getCurrentPosition());
+        }
+
     }
 
     /**
@@ -141,22 +149,36 @@ public class PlayService extends Service implements OnMediaSessionManagerControl
 
         // 如果是新歌，那么则需要重新播放
         resetPlayer();
-        currentFilePath = iLikedMusicEntity.getMusicFilePath();
+        // 设置播放源并准备
+        setAndPreparePlayer(iLikedMusicEntity.getMusicFilePath());
+        player.start();
+        // 设置音乐后播放需要的数据
+        setPlayData(iLikedMusicEntity);
+        // 更新 MediaSession 和 Notification
+        updateMediaSessionAndNotification(PlaybackStateCompat.STATE_PLAYING , 0);
+    }
 
+    /**
+     * 设置播放源并准备
+     * @param musicFilePath 音乐文件路径
+     */
+    private void setAndPreparePlayer(String musicFilePath) {
         try {
-            player.setDataSource(iLikedMusicEntity.getMusicFilePath());
+            player.setDataSource(musicFilePath);
             player.prepare();
-            player.start();
-
-            isPrepared = true;
-            GlobalDataManager.getInstance().setPlayer(player);
-            currentPlayEntity = iLikedMusicEntity;
-
-            updateMediaSessionAndNotification(PlaybackStateCompat.STATE_PLAYING , 0);
-
-        } catch (IOException e) {
-            Log.d("@@@" , "播放失败 : " + e.getMessage());
+        } catch (Exception e) {
+            Log.d("@@@" , "准备失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 设置播放后的数据
+     */
+    private void setPlayData(ILikedMusicEntity iLikedMusicEntity) {
+        isPrepared = true;
+        GlobalDataManager.getInstance().setPlayer(player);
+        currentPlayEntity = iLikedMusicEntity;
+        currentFilePath = iLikedMusicEntity.getMusicFilePath();
     }
 
     /**
@@ -182,7 +204,7 @@ public class PlayService extends Service implements OnMediaSessionManagerControl
      * @param progress 进度
      */
     public void setProgress(int progress) {
-        if (player != null) {
+        if (player != null && isPrepared) {
             player.seekTo(progress);
             updateMediaSessionAndNotification(PlaybackStateCompat.STATE_PLAYING , progress);
         }
@@ -228,6 +250,10 @@ public class PlayService extends Service implements OnMediaSessionManagerControl
         // 停止前台服务并取消通知
         stopForeground(STOP_FOREGROUND_REMOVE);
         notificationManager.cannel();
+        // 清空监听器避免内存泄漏
+        onFinishListener = null;
+        onSequencePlayListener = null;
+        onMediaSessionControlListener = null;
         return super.onUnbind(intent);
     }
 
@@ -245,6 +271,7 @@ public class PlayService extends Service implements OnMediaSessionManagerControl
         } else if (controlType == ControlTypeConstants.MEDIA_CONTROL_TYPE_PAUSE) {
             pause();
             onMediaSessionControlListener.onMediaSessionControl(currentPlayEntity , ControlTypeConstants.MEDIA_CONTROL_TYPE_PAUSE);
+            SPDataUtils.storageInformation(this , SPDataConstants.LAST_PLAY_POSITION , currentPlayEntity.getMusicName() + "_" + player.getCurrentPosition());
             // 播放控制：上一曲
         } else if (controlType == ControlTypeConstants.MEDIA_CONTROL_TYPE_PREVIOUS) {
             ILikedMusicEntity previousMusicEntity = MusicUtils.getNextOrPreviousMusic(PlayService.this, currentPlayEntity.getMusicName(), MusicUtils.PREVIOUS_MUSIC);

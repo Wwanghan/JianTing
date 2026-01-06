@@ -278,7 +278,9 @@ public class PlayActivity extends AppCompatActivity {
                         cannelPlayerTimer();
                     } else {
                         if (GlobalDataManager.getInstance().getPlayer() != null) {
-                            musicSeekBar.setProgress(GlobalDataManager.getInstance().getPlayer().getCurrentPosition());
+                            int currentPosition = GlobalDataManager.getInstance().getPlayer().getCurrentPosition();
+                            musicSeekBar.setProgress(currentPosition);
+                            SPDataUtils.storageInformation(PlayActivity.this , SPDataConstants.LAST_PLAY_POSITION , iLikedMusicEntity.getMusicName() + "_" + currentPosition);
                         }
                     }
                 }
@@ -354,6 +356,16 @@ public class PlayActivity extends AppCompatActivity {
         playButton.setImageResource(R.drawable.play_button);
         musicSeekBar.setMax(Integer.parseInt(iLikedMusicEntity.getDuration()));
         totalPlayTime.setText(TimeUtils.MillisToTime(Integer.parseInt(iLikedMusicEntity.getDuration())));
+
+        String lastPlayPositionInfo = SPDataUtils.getStorageInformation(PlayActivity.this, SPDataConstants.LAST_PLAY_POSITION);
+        if (lastPlayPositionInfo != null) {
+            String lastPlayMusic = lastPlayPositionInfo.split("_")[0];
+            String lastPlayMusicPosition = lastPlayPositionInfo.split("_")[1];
+            if (lastPlayMusic.equals(iLikedMusicEntity.getMusicName())) {
+                currentPlayTime.setText(TimeUtils.MillisToTime(Integer.parseInt(lastPlayMusicPosition)));
+                musicSeekBar.setProgress(Integer.parseInt(lastPlayMusicPosition));
+            }
+        }
 
         // 先设置播放按钮显示
         GlobalMethodsUtils.setPlayButton(playButton);

@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
@@ -268,6 +269,17 @@ public class ILikedMusicActivity extends AppCompatActivity {
 
         registerReceiver(mediaBroadcastReceiver , new IntentFilter(MediaBroadcastAction.ACTION_FINISH) , RECEIVER_EXPORTED);
         registerReceiver(standardBroadcastReceiver , new IntentFilter(StandardBroadcastAction.ACTION_UPDATE_UI) , RECEIVER_EXPORTED);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        String lastPlayMusicName = SPDataUtils.getStorageInformation(this, SPDataConstants.LAST_PLAY);
+        MediaPlayer player = GlobalDataManager.getInstance().getPlayer();
+        if (lastPlayMusicName != null && player != null && player.isPlaying()) {
+            SPDataUtils.storageInformation(this , SPDataConstants.LAST_PLAY_POSITION , lastPlayMusicName + "_" + player.getCurrentPosition());
+        }
     }
 
     @Override

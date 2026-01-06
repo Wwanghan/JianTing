@@ -20,12 +20,14 @@ import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.Broadcast.MediaMethods;
 import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
 import com.mrtoad.jianting.Broadcast.StandardBroadcastMethods;
+import com.mrtoad.jianting.Constants.SPDataConstants;
 import com.mrtoad.jianting.Constants.ViewAnimationConstants;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
 import com.mrtoad.jianting.GlobalDataManager;
 import com.mrtoad.jianting.Interface.OnBottomPlayerReadyListener;
 import com.mrtoad.jianting.R;
 import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
+import com.mrtoad.jianting.Utils.SPDataUtils;
 import com.mrtoad.jianting.Utils.ToastUtils;
 import com.mrtoad.jianting.Utils.ViewAnimationUtils;
 
@@ -92,6 +94,7 @@ public class BottomPlayerFragment extends Fragment {
             if (GlobalDataManager.getInstance().isPlaying()) {
                 GlobalDataManager.getInstance().setPlaying(false);
                 MediaMethods.pauseMusic(getActivity());
+                SPDataUtils.storageInformation(getActivity() , SPDataConstants.LAST_PLAY_POSITION , iLikedMusicEntity.getMusicName() + "_" + GlobalDataManager.getInstance().getPlayer().getCurrentPosition());
             } else {
                 GlobalDataManager.getInstance().setPlaying(true);
                 MediaMethods.playMusic(getActivity() , iLikedMusicEntity);
