@@ -1,10 +1,13 @@
 package com.mrtoad.jianting.Service.Manager;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.SystemClock;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.util.Log;
 
 import com.mrtoad.jianting.Constants.ControlTypeConstants;
 import com.mrtoad.jianting.Constants.SPDataConstants;
@@ -132,11 +135,28 @@ public class MediaSessionManager {
      */
     public void setMediaMetadata(ILikedMusicEntity entity) {
         MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
+                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART , getScaledBitmap(entity.getMusicCover()))
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE , entity.getMusicName() != null ? entity.getMusicName() : MediaSessionManagerConstants.MUSIC_TITLE_UNKNOWN)
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST , entity.getMusicAuthor() != null ? entity.getMusicAuthor() : MediaSessionManagerConstants.MUSIC_AUTHOR_UNKNOWN)
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION , Long.parseLong(entity.getDuration()) != 0 ? Long.parseLong(entity.getDuration()) : 0)
                 .build();
         mediaSession.setMetadata(metadata);
+    }
+
+    /**
+     * 获取缩放后的歌曲封面
+     * @param musicCoverPath 歌曲封面路径
+     * @return 缩放后的歌曲封面
+     */
+    private Bitmap getScaledBitmap(String musicCoverPath) {
+        Bitmap scaledBitmap = null;
+        if (musicCoverPath != null && !musicCoverPath.isEmpty()) {
+            Bitmap bitmap = BitmapFactory.decodeFile(musicCoverPath);
+            if (bitmap != null) {
+                scaledBitmap = Bitmap.createScaledBitmap(bitmap, 512, 512, true);
+            }
+        }
+        return scaledBitmap;
     }
 
     /**

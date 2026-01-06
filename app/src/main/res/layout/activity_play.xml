@@ -133,6 +133,17 @@
             android:layout_height="match_parent">
 
             <ImageView
+                android:id="@+id/music_play_list_image_view"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/music_play_list"
+                android:layout_centerVertical="true"
+                android:layout_alignParentLeft="true"
+                android:layout_marginLeft="30dp"
+                android:layout_marginBottom="20dp"
+                />
+
+            <ImageView
                 android:id="@+id/play_model_icon"
                 android:layout_width="30dp"
                 android:layout_height="30dp"

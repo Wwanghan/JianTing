@@ -4,6 +4,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -12,6 +13,10 @@ import android.widget.TextView;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.kongzue.dialogx.dialogs.BottomDialog;
+import com.kongzue.dialogx.dialogs.BottomMenu;
+import com.kongzue.dialogx.interfaces.OnDialogButtonClickListener;
+import com.kongzue.dialogx.interfaces.OnMenuItemClickListener;
 import com.mrtoad.jianting.Broadcast.Action.MediaBroadcastAction;
 import com.mrtoad.jianting.Broadcast.MediaMethods;
 import com.mrtoad.jianting.Broadcast.Receiver.MediaBroadcastReceiver;
@@ -60,9 +65,12 @@ public class PlayActivity extends AppCompatActivity {
     private boolean isTrackingTouch = false;
     private MediaBroadcastReceiver mediaBroadcastReceiver = new MediaBroadcastReceiver();
     private List<String> musicList = new ArrayList<>();
+    private ImageView musicPlayListImageView;
+    private String[] musicMenuList;
     private ImageView playModelIcon;
     // 获取当前播放模式
     private int currentPlayModel;
+    private static final String MUSIC_LIST_STRING = "音乐列表";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,16 +88,16 @@ public class PlayActivity extends AppCompatActivity {
         totalPlayTime = findViewById(R.id.total_play_time);
         previousMusic = findViewById(R.id.previous_music);
         nextMusic = findViewById(R.id.next_music);
+        musicPlayListImageView = findViewById(R.id.music_play_list_image_view);
         playModelIcon = findViewById(R.id.play_model_icon);
 
         iLikedMusicEntity = getIntent().getParcelableExtra(ACTION_KEY_I_LIKED_MUSIC_ENTITY);
         currentPlayModel = GlobalDataManager.getInstance().getCurrentPlayModel(this);
 
+        // 为视图设置数据
         setData();
-
-        // 获取音乐播放列表
-        musicList = SPDataUtils.getLocalList(PlayActivity.this, LocalListConstants.LOCAL_LIST_I_LIKED_MUSIC);
-        Collections.reverse(musicList);
+        // 设置音乐列表和音乐菜单列表
+        setMusicList();
 
         /**
          * 监听进度条事件
@@ -182,6 +190,31 @@ public class PlayActivity extends AppCompatActivity {
         });
 
         /**
+         * 播放列表图标点击事件
+         */
+        musicPlayListImageView.setOnClickListener((v) -> {
+            ViewAnimationUtils.waterRipplesAnimation(musicPlayListImageView , ViewAnimationConstants.WATER_RIPPLES_DURATION);
+
+            /**
+             * 音乐菜单列表
+             */
+            BottomMenu.show(musicMenuList)
+                    .setMessage(MUSIC_LIST_STRING)
+                    .setOnMenuItemClickListener((dialog , text , index) -> {
+                        ViewAnimationUtils.fadeOutAnimation(musicCover , ViewAnimationConstants.FADE_OUT_DURATION , () -> {
+                            // 获取点击的音乐的实体，并播放它
+                            ILikedMusicEntity musicEntity = GlobalMethodsUtils.getMusicEntityByMusicName(PlayActivity.this, String.valueOf(text));
+                            MediaMethods.switchPlay(PlayActivity.this , musicEntity);
+                            // 更新数据
+                            iLikedMusicEntity = musicEntity;
+                            updateData();
+                        });
+                        return false;
+                    });
+
+        });
+
+        /**
          * 播放模式切换（更新)
          */
         updatePlayModel();
@@ -266,6 +299,20 @@ public class PlayActivity extends AppCompatActivity {
             } finally {
                 timer = null;
             }
+        }
+    }
+
+    /**
+     * 设置音乐列表（音乐列表 和 音乐菜单列表）
+     */
+    private void setMusicList() {
+        // 音乐列表，音乐名列表
+        musicList = SPDataUtils.getLocalList(PlayActivity.this, LocalListConstants.LOCAL_LIST_I_LIKED_MUSIC);
+        Collections.reverse(musicList);
+        // 音乐菜单列表
+        musicMenuList = new String[musicList.size()];
+        for (int i = 0; i < musicList.size(); i++) {
+            musicMenuList[i] = musicList.get(i);
         }
     }
 
