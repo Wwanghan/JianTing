@@ -4,25 +4,17 @@ import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
-import android.util.Log;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.DrawableRes;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.view.WindowCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -49,7 +41,6 @@ import com.mrtoad.jianting.Utils.FragmentUtils;
 import com.mrtoad.jianting.Utils.GlobalMethodsUtils;
 import com.mrtoad.jianting.Utils.KMeansColorExtractor;
 import com.mrtoad.jianting.Utils.SPDataUtils;
-import com.mrtoad.jianting.Utils.ToastUtils;
 import com.mrtoad.jianting.Utils.ViewAnimationUtils;
 
 import java.io.File;
@@ -269,17 +260,6 @@ public class ILikedMusicActivity extends AppCompatActivity {
 
         registerReceiver(mediaBroadcastReceiver , new IntentFilter(MediaBroadcastAction.ACTION_FINISH) , RECEIVER_EXPORTED);
         registerReceiver(standardBroadcastReceiver , new IntentFilter(StandardBroadcastAction.ACTION_UPDATE_UI) , RECEIVER_EXPORTED);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        String lastPlayMusicName = SPDataUtils.getStorageInformation(this, SPDataConstants.LAST_PLAY);
-        MediaPlayer player = GlobalDataManager.getInstance().getPlayer();
-        if (lastPlayMusicName != null && player != null && player.isPlaying()) {
-            SPDataUtils.storageInformation(this , SPDataConstants.LAST_PLAY_POSITION , lastPlayMusicName + "_" + player.getCurrentPosition());
-        }
     }
 
     @Override

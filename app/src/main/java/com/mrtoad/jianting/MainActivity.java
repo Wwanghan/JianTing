@@ -5,10 +5,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Color;
-import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.RequiresApi;
@@ -89,6 +89,9 @@ public class MainActivity extends AppCompatActivity {
         // 初始化 DialogX，方便后续使用
         DialogX.init(this);
 
+        // 应用开始时，初始化播放位置记录信息。初始化为 null。即不管上次听到了哪，下次重新打开都默认零开始播放
+        SPDataUtils.storageInformation(this , SPDataConstants.LAST_PLAY_POSITION , null);
+
         /**
          * 加载底部导航栏 和 底部播放器
          */
@@ -166,20 +169,6 @@ public class MainActivity extends AppCompatActivity {
         intentFilter.addAction(MediaBroadcastAction.ACTION_PROGRESS_CHANGED);
         intentFilter.addAction(MediaBroadcastAction.ACTION_SWITCH_PLAY);
         registerReceiver(mediaBroadcastReceiver , intentFilter , RECEIVER_EXPORTED);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        // TODO 记录一下。这个保存音乐播放位置的代码并不是最好的解决方案
-        // TODO 这里在 onStop 下填写保存音乐播放位置的代码，是保证用户退出时一定可以执行到，如果用户直接上划退出，那么程序不会执行 onDestory
-        // TODO 但这却是不是一个很好的解决办法。后面有空可以修改通过全局定时器来保存播放位置，修改的话别忘了把 ILikedMusicActivity 中的 onStop 也去掉
-        String lastPlayMusicName = SPDataUtils.getStorageInformation(this, SPDataConstants.LAST_PLAY);
-        MediaPlayer player = GlobalDataManager.getInstance().getPlayer();
-        if (lastPlayMusicName != null && player != null && player.isPlaying()) {
-            SPDataUtils.storageInformation(this , SPDataConstants.LAST_PLAY_POSITION , lastPlayMusicName + "_" + player.getCurrentPosition());
-        }
     }
 
     @Override

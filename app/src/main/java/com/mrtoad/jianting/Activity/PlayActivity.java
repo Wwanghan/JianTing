@@ -365,6 +365,8 @@ public class PlayActivity extends AppCompatActivity {
                 currentPlayTime.setText(TimeUtils.MillisToTime(Integer.parseInt(lastPlayMusicPosition)));
                 musicSeekBar.setProgress(Integer.parseInt(lastPlayMusicPosition));
             }
+        } else {
+            currentPlayTime.setText(TimeUtils.MillisToTime(0));
         }
 
         // 先设置播放按钮显示

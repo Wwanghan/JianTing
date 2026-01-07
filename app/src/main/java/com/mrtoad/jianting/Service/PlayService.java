@@ -40,7 +40,6 @@ public class PlayService extends Service implements OnMediaSessionManagerControl
         }
     }
     private ILikedMusicEntity currentPlayEntity;
-    private String lastPlayPositionInfo;
     private List<String> musicList;
 
     /**
@@ -121,15 +120,8 @@ public class PlayService extends Service implements OnMediaSessionManagerControl
             currentPlayEntity = GlobalMethodsUtils.getMusicEntityByMusicName(this , lastPlayMusicName);
         }
 
-        // 获取上次音乐播放位置
-        lastPlayPositionInfo = SPDataUtils.getStorageInformation(this , SPDataConstants.LAST_PLAY_POSITION);
-        if (lastPlayPositionInfo != null) {
-            setAndPreparePlayer(currentPlayEntity.getMusicFilePath());
-            setPlayData(currentPlayEntity);
-            setProgress(Integer.parseInt(lastPlayPositionInfo.split("_")[1]));
-
-            updateMediaSessionAndNotification(PlaybackStateCompat.STATE_STOPPED , player.getCurrentPosition());
-        }
+        // 设置初始播放状态停止（开始默认为停止状态，播放位置默认为0）
+        updateMediaSessionAndNotification(PlaybackStateCompat.STATE_STOPPED , 0);
 
     }
 
