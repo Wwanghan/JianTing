@@ -225,28 +225,65 @@ public class PlayService extends Service implements OnMediaSessionManagerControl
     }
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        // 就算因系统内存不足被杀死，那么系统会重新启动服务。可以确保服务一直处于运行状态
+        return START_STICKY;
+    }
+
+    @Override
     public IBinder onBind(Intent intent) {
         return myBinder;
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        // 释放 MediaPlayer
+        // 返回 true，表示告诉系统，我可能还会回来，回来后就可以重新绑定服务
+        return true;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        releaseAllResources();
+    }
+
+    /**
+     * 释放所有资源
+     */
+    private void releaseAllResources() {
+        // 1. 释放 MediaPlayer
         if (player != null) {
+            if (player.isPlaying()) {
+                player.stop();
+            }
             player.release();
             player = null;
         }
+
+        // 2. 释放 MediaSession
+        if (mediaSessionManager != null) {
+            mediaSessionManager.release();
+        }
+
+        // 3. 停止前台服务
+        stopForeground(true);
+
+        // 4. 取消通知
+        if (notificationManager != null) {
+            notificationManager.cannel();
+        }
+
+        // 5. 重置状态
         resetPlayer();
-        // 释放媒体会话
-        mediaSessionManager.release();
-        // 停止前台服务并取消通知
-        stopForeground(STOP_FOREGROUND_REMOVE);
-        notificationManager.cannel();
-        // 清空监听器避免内存泄漏
+
+        // 6. 清空监听器
         onFinishListener = null;
         onSequencePlayListener = null;
         onMediaSessionControlListener = null;
-        return super.onUnbind(intent);
+
+        // 7. 清空当前播放实体
+        currentPlayEntity = null;
+        currentFilePath = null;
     }
 
     /**

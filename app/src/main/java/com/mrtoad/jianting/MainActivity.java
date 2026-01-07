@@ -8,7 +8,6 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.RequiresApi;
@@ -117,8 +116,11 @@ public class MainActivity extends AppCompatActivity {
             bottomPlayerFragment.updateUi(iLikedMusicEntity);
         }));
 
+        // 先启动服务，确保服务独立运行，避免绑定服务解绑后服务彻底停止
+        Intent startIntent = new Intent(this , PlayService.class);
+        startService(startIntent);
 
-        // 绑定音乐播放服务（全局唯一，只需要绑定一次）
+        // 绑定音乐播放服务
         Intent bindServiceIntent = new Intent(this , PlayService.class);
         bindService(bindServiceIntent , serviceConnection , BIND_AUTO_CREATE);
 
