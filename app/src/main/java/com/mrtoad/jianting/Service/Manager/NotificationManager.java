@@ -3,6 +3,7 @@ package com.mrtoad.jianting.Service.Manager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -18,6 +19,7 @@ import androidx.media.session.MediaButtonReceiver;
 
 import com.mrtoad.jianting.Activity.PlayActivity;
 import com.mrtoad.jianting.Entity.ILikedMusicEntity;
+import com.mrtoad.jianting.MainActivity;
 import com.mrtoad.jianting.R;
 import com.mrtoad.jianting.Service.Constants.NotificationManagerConstants;
 
@@ -79,16 +81,20 @@ public class NotificationManager {
         }
 
         // 创建跳转到 PlayActivity 的 Intent/ 创建跳转到 PlayActivity 的 Intent
+        // 使用 TaskStackBuilder 来构建完整的回退栈，确保点击跳转到 PlayActivity 后，返回可以返回到 MainActivity
+        // 也就是保证了。MainActivity 一定存在。
+        Intent mainIntent = new Intent(context , MainActivity.class);
+        mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
         Intent playIntent = new Intent(context , PlayActivity.class);
         playIntent.putExtra(PlayActivity.ACTION_KEY_I_LIKED_MUSIC_ENTITY, entity);
-        playIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 
-        // 使用 PendingIntent.getActivity() 的第四个参数设置 FLAG_UPDATE_CURRENT
-        // 确保每次更新时都能获取到最新的实体
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                context,
-                0,  // 自定义请求码，确保唯一性
-                playIntent,
+        TaskStackBuilder taskStackBuilder = TaskStackBuilder.create(context);
+        taskStackBuilder.addNextIntent(mainIntent);
+        taskStackBuilder.addNextIntent(playIntent);
+
+        PendingIntent pendingIntent = taskStackBuilder.getPendingIntent(
+                0,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
