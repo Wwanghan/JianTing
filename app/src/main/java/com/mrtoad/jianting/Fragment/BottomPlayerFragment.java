@@ -65,6 +65,7 @@ public class BottomPlayerFragment extends Fragment {
         musicAuthor = view.findViewById(R.id.music_author);
         playButton = view.findViewById(R.id.play_button);
 
+        // 底部播放导航 Fragment 创建完毕时，发送准备就绪广播
         if (onBottomPlayerReadyListener != null) {
             onBottomPlayerReadyListener.onBottomPlayerReady();
         }
@@ -105,6 +106,10 @@ public class BottomPlayerFragment extends Fragment {
         });
     }
 
+    /**
+     * 更新 UI 和 音乐实体对象
+     * @param iLikedMusicEntity 音乐实体对象
+     */
     public void updateUi(ILikedMusicEntity iLikedMusicEntity) {
         this.iLikedMusicEntity = iLikedMusicEntity;
         GlobalMethodsUtils.setMusicCover(getActivity() , this.musicCover , iLikedMusicEntity.getMusicCover());
@@ -113,16 +118,4 @@ public class BottomPlayerFragment extends Fragment {
         this.musicFilePath = iLikedMusicEntity.getMusicFilePath();
         GlobalMethodsUtils.setPlayButton(playButton);
     }
-
-    /**
-     * 设置播放按钮状态
-     */
-    private void setPlayButton() {
-        if (GlobalDataManager.getInstance().isPlaying()) {
-            playButton.setImageResource(R.drawable.pause_button);
-        } else {
-            playButton.setImageResource(R.drawable.play_button);
-        }
-    }
-
 }
