@@ -94,10 +94,13 @@ public class PlayActivity extends AppCompatActivity {
         iLikedMusicEntity = getIntent().getParcelableExtra(ACTION_KEY_I_LIKED_MUSIC_ENTITY);
         currentPlayModel = GlobalDataManager.getInstance().getCurrentPlayModel(this);
 
-        // 为视图设置数据
+        // 设置初始化数据
         setData();
-        // 设置音乐列表和音乐菜单列表
-        setMusicList();
+
+        // 如果进入页面时，音乐处于播放状态，则立马开启定时器
+        if (GlobalDataManager.getInstance().isPlaying()) {
+            startPlayerTimer();
+        }
 
         /**
          * 监听进度条事件
@@ -105,24 +108,23 @@ public class PlayActivity extends AppCompatActivity {
         musicSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                // 进度条拖动停止。改变当前播放时间
                 currentPlayTime.setText(TimeUtils.MillisToTime(i));
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
+                // 当进度条开始拖动，设置 isTrackingTouch 标志位为 true
                 isTrackingTouch = true;
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                // 当进度条停止拖动，发送进度条改变的广播，并谁知 isTrackingTouch 标志位为 false
                 isTrackingTouch = false;
                 MediaMethods.setProgress(PlayActivity.this , seekBar.getProgress());
             }
         });
-
-        if (GlobalDataManager.getInstance().isPlaying()) {
-            startPlayerTimer();
-        }
 
         /**
          * 设置播放按钮点击事件
@@ -220,7 +222,7 @@ public class PlayActivity extends AppCompatActivity {
         updatePlayModel();
         playModelIcon.setOnClickListener((v) -> {
             ViewAnimationUtils.waterRipplesAnimation(playModelIcon , ViewAnimationConstants.WATER_RIPPLES_DURATION);
-            changePlayModel();
+            switchPlayModel();
         });
     }
 
@@ -243,19 +245,6 @@ public class PlayActivity extends AppCompatActivity {
             iLikedMusicEntity = nextMusicEntity;
             updateData();
         });
-    }
-
-    /**
-     * 更新数据
-     */
-    private void updateData() {
-        // 更新全局数据
-        GlobalDataManager.getInstance().setPlaying(true);
-        StandardBroadcastMethods.updateBottomPlayerUi(PlayActivity.this , iLikedMusicEntity);
-        SPDataUtils.storageInformation(PlayActivity.this , SPDataConstants.LAST_PLAY , iLikedMusicEntity.getMusicName());
-        // 更新当前 UI
-        startPlayerTimer();
-        setData();
     }
 
     /**
@@ -305,6 +294,32 @@ public class PlayActivity extends AppCompatActivity {
     }
 
     /**
+     * 更新数据（包括更新全局的一些数据 和 本地视图数据）
+     */
+    private void updateData() {
+        // 更新全局数据
+        GlobalDataManager.getInstance().setPlaying(true);
+        StandardBroadcastMethods.updateBottomPlayerUi(PlayActivity.this , iLikedMusicEntity);
+        SPDataUtils.storageInformation(PlayActivity.this , SPDataConstants.LAST_PLAY , iLikedMusicEntity.getMusicName());
+        // 更新当前 UI。开启定时器代码必须要在 setData 之前。不然切换歌曲时，进度条会抽搐那么一下
+        startPlayerTimer();
+        setData();
+    }
+
+    /**
+     * 设置 和 初始化数据（设置 动态渐变背景 和 视图数据）
+     * 设置动态渐变背景、设置基本数据、设置播放按钮显示
+     */
+    private void setData() {
+        // 设置动态渐变背景
+        setDynamicGradientBackground();
+        // 设置视图数据
+        setViewData();
+        // 设置 音乐列表 和 音乐菜单列表
+        setMusicList();
+    }
+
+    /**
      * 设置音乐列表（音乐列表 和 音乐菜单列表）
      */
     private void setMusicList() {
@@ -319,11 +334,9 @@ public class PlayActivity extends AppCompatActivity {
     }
 
     /**
-     * 初始设置
-     * 设置动态渐变背景、设置基本数据、设置播放按钮显示
+     * 动态设置渐变背景
      */
-    private void setData() {
-        // 设置动态渐变背景
+    private void setDynamicGradientBackground() {
         if (iLikedMusicEntity.getMusicCover() != null) {
             // 根据添加封面时，保存在本地的音乐主次颜色来直接设置。
             String mapKey = iLikedMusicEntity.getMusicName() + MapConstants.MUSIC_COVER_COLOR_MAP_SUFFIX;
@@ -346,17 +359,24 @@ public class PlayActivity extends AppCompatActivity {
                 bitmap.recycle();
             }
         }
+    }
 
+    /**
+     * 设置视图数据
+     */
+    private void setViewData() {
+        // 设置封面显示（使用淡入动画）
         ViewAnimationUtils.fadeInAnimation(musicCover , ViewAnimationConstants.FADE_IN_DURATION);
         GlobalMethodsUtils.setMusicCover(PlayActivity.this , musicCover , iLikedMusicEntity.getMusicCover());
 
-
+        // 设置歌曲名、作者名、进度条、进度条总时长、播放按钮视图数据
         musicName.setText(iLikedMusicEntity.getMusicName());
         musicAuthor.setText(iLikedMusicEntity.getMusicAuthor());
-        playButton.setImageResource(R.drawable.play_button);
         musicSeekBar.setMax(Integer.parseInt(iLikedMusicEntity.getDuration()));
         totalPlayTime.setText(TimeUtils.MillisToTime(Integer.parseInt(iLikedMusicEntity.getDuration())));
+        playButton.setImageResource(R.drawable.play_button);
 
+        // 根据保存本地的音乐位置信息。动态设置当前的播放进度
         String lastPlayPositionInfo = SPDataUtils.getStorageInformation(PlayActivity.this, SPDataConstants.LAST_PLAY_POSITION);
         if (lastPlayPositionInfo != null) {
             String lastPlayMusic = lastPlayPositionInfo.split("_")[0];
@@ -369,7 +389,7 @@ public class PlayActivity extends AppCompatActivity {
             currentPlayTime.setText(TimeUtils.MillisToTime(0));
         }
 
-        // 先设置播放按钮显示
+        // 设置播放按钮显示
         GlobalMethodsUtils.setPlayButton(playButton);
     }
 
@@ -385,7 +405,10 @@ public class PlayActivity extends AppCompatActivity {
         SPDataUtils.storageInformation(PlayActivity.this , SPDataConstants.PLAY_MODEL , String.valueOf(currentPlayModel));
     }
 
-    private void changePlayModel() {
+    /**
+     * 切换播放模式
+     */
+    private void switchPlayModel() {
         currentPlayModel = currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_SEQUENCE ? MediaPlayModelConstants.PLAY_MODEL_CYCLE : MediaPlayModelConstants.PLAY_MODEL_SEQUENCE;
         if (currentPlayModel == MediaPlayModelConstants.PLAY_MODEL_SEQUENCE) {
             ToastUtils.showToast(PlayActivity.this , MediaPlayModelConstants.PLAY_MODEL_SEQUENCE_TEXT);
@@ -398,7 +421,7 @@ public class PlayActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-
+        // 注册广播
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(MediaBroadcastAction.ACTION_FINISH);
         intentFilter.addAction(MediaBroadcastAction.ACTION_SEQUENCE_PLAY);
@@ -416,7 +439,7 @@ public class PlayActivity extends AppCompatActivity {
         if (musicCover != null) {
             musicCover.setImageDrawable(null);
         }
-
+        // 解除广播
         unregisterReceiver(mediaBroadcastReceiver);
     }
 }
