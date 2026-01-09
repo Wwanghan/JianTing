@@ -75,23 +75,25 @@ public class ILikedMusicActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_iliked_music);
 
-        getWindow().setStatusBarColor(Color.BLACK);
-        // 设置状态栏图标为浅色（白色）
-        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
-
         iLikedMusicRecyclerView = findViewById(R.id.i_liked_music_recycler_view);
         biggerImageCover = findViewById(R.id.bigger_music_cover);
         playButton = findViewById(R.id.play_button);
         noAddMusicArea = findViewById(R.id.no_add_music_area);
 
+        // 设置状态栏图标为浅色（白色）
+        getWindow().setStatusBarColor(Color.BLACK);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
+
         // 注册活动结果监听器
         registerActivityResult();
         Glide.with(this).load(R.mipmap.avatar).circleCrop().into(biggerImageCover);
 
+        // 加载底部播放导航
         fragmentManager = getSupportFragmentManager();
         bottomPlayerFragment = BottomPlayerFragment.newInstance();
         FragmentUtils.loadFragment(fragmentManager , R.id.bottom_player_fragment , bottomPlayerFragment);
 
+        // 获取本地保存的音乐列表
         List<String> musicNameList = SPDataUtils.getLocalList(this, LocalListConstants.LOCAL_LIST_I_LIKED_MUSIC);
         // 反转列表，最新导入的显示在最上方
         Collections.reverse(musicNameList);
@@ -117,11 +119,14 @@ public class ILikedMusicActivity extends AppCompatActivity {
 
         }
 
-
+        // 设置 RecyclerView 和 RecyclerView 适配器
         iLikedMusicAdapter = new ILikedMusicAdapter(this , iLIkedMusicList);
         iLikedMusicRecyclerView.setAdapter(iLikedMusicAdapter);
         iLikedMusicRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        /**
+         * 监听底部播放导航准备完成
+         */
         bottomPlayerFragment.setOnBottomPlayerReadyListener(() -> {
             GlobalMethodsUtils.setBottmPlayerFragment(this , fragmentManager , bottomPlayerFragment);
         });
@@ -189,6 +194,7 @@ public class ILikedMusicActivity extends AppCompatActivity {
      * 注册活动结果监听器
      */
     private void registerActivityResult() {
+        // 图片选择器，用于修改歌曲封面
         imagePickerLauncher = registerForActivityResult(new ActivityResultContracts.GetContent() , (uri) -> {
             if (uri != null) {
                 try {
@@ -258,6 +264,7 @@ public class ILikedMusicActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
+        // 注册广播
         registerReceiver(mediaBroadcastReceiver , new IntentFilter(MediaBroadcastAction.ACTION_FINISH) , RECEIVER_EXPORTED);
         registerReceiver(standardBroadcastReceiver , new IntentFilter(StandardBroadcastAction.ACTION_UPDATE_UI) , RECEIVER_EXPORTED);
     }
@@ -266,6 +273,7 @@ public class ILikedMusicActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
+        // 解除广播
         unregisterReceiver(mediaBroadcastReceiver);
         unregisterReceiver(standardBroadcastReceiver);
     }
